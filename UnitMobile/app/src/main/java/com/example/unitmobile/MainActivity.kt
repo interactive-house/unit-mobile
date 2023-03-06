@@ -237,7 +237,6 @@ fun HumidityReader(
             for (item in snapshot.children) {
                 if (item.key.toString() == "humidity") {
                     humidity.value = item.value.toString().toInt()
-                    Log.d("Humidity", humidity.value.toString())
 
                     // Turn on lamp if humidity is below 3
                     /*
