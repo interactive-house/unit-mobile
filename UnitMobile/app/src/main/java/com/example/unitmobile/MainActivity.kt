@@ -8,7 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ToggleOn
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +34,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val db = Firebase.database("https://lab2se-c0094-default-rtdb.europe-west1.firebasedatabase.app/")
+        val db = Firebase.database("https://softwareengineering-d0cdc-default-rtdb.europe-west1.firebasedatabase.app/")
         setContent {
             UnitMobileTheme {
                 // A surface container using the 'background' color from the theme
@@ -68,12 +68,14 @@ fun MyApp(db: FirebaseDatabase) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Smart Home App") }
+                title = { Text("Smart House App") }
             )
         },
         content = {
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(it),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 HomeScreen(switches, db, itemStateTrue, itemStateFalse)
@@ -100,7 +102,9 @@ fun HomeScreen(
             // Handle error
         }
     })
-
+    Column() {
+        TitleHomeScreen("Smart House App")
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -108,8 +112,9 @@ fun HomeScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+
         ItemSwitch(
-            icon = Icons.Filled.ToggleOn,
+            icon = Icons.Filled.Circle,
             label = "Lamp",
             onCheckedChange = { isChecked ->
                 db.getReference("items").child("lamp").setValue(if (isChecked) "ON" else "OFF")
@@ -120,25 +125,46 @@ fun HomeScreen(
             itemStateFalse = itemStateFalse[0],
             itemStateTrue = itemStateTrue[0]
         )
+        Divider(
+            color = Color.Gray,
+            thickness = 1.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+        )
         ItemSwitch(
-            icon = Icons.Filled.ToggleOn,
+            icon = Icons.Filled.Circle,
             label = "Door",
             onCheckedChange = { isChecked -> db.getReference("items").child("door").setValue(if (isChecked) "OPEN" else "CLOSED") },
             isChecked = switches["door"]?.value ?: false,
             imageResOn = R.drawable.door_open,
             imageResOff = R.drawable.door_closed,
-            itemStateFalse = itemStateFalse[0],
-            itemStateTrue = itemStateTrue[0]
+            itemStateFalse = itemStateFalse[1],
+            itemStateTrue = itemStateTrue[1]
+        )
+        Divider(
+            color = Color.Gray,
+            thickness = 1.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
         )
         ItemSwitch(
-            icon = Icons.Filled.ToggleOn,
+            icon = Icons.Filled.Circle,
             label = "Window",
             onCheckedChange = { isChecked -> db.getReference("items").child("window").setValue(if (isChecked) "OPEN" else "CLOSED") },
             isChecked = switches["window"]?.value ?: false,
-            imageResOn = R.drawable.door_open,
-            imageResOff = R.drawable.door_closed,
+            imageResOn = R.drawable.window_open,
+            imageResOff = R.drawable.window_closed,
             itemStateFalse = itemStateFalse[1],
             itemStateTrue = itemStateTrue[1]
+        )
+        Divider(
+            color = Color.Gray,
+            thickness = 1.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
         )
         HumidityReader(
             db = db,
@@ -146,6 +172,15 @@ fun HomeScreen(
         )
     }
 }
+@Composable
+fun TitleHomeScreen(title: String) {
+    Text(
+        text = title,
+        fontSize = 24.sp,
+        modifier = Modifier.padding(vertical = 8.dp)
+    )
+}
+
 @Composable
 fun ItemSwitch(
     icon: ImageVector,
@@ -157,7 +192,7 @@ fun ItemSwitch(
     itemStateFalse: String,
     itemStateTrue: String
 ) {
-    val tint = if (isChecked) Color(0xFF4CAF50) else Color.Gray
+    val tint = if (isChecked) Color(0xFF4CAF50) else Color.Red
     val imageRes = if (isChecked) imageResOn else imageResOff
     val itemState = if (isChecked) "$label is $itemStateTrue" else "$label is $itemStateFalse"
 
@@ -169,7 +204,7 @@ fun ItemSwitch(
             icon,
             contentDescription = label,
             tint = tint,
-            modifier = Modifier.size(48.dp)
+            modifier = Modifier.size(24.dp)
         )
 
         Text(
@@ -204,12 +239,15 @@ fun HumidityReader(
                     humidity.value = item.value.toString().toInt()
                     Log.d("Humidity", humidity.value.toString())
 
+                    // Turn on lamp if humidity is below 3
+                    /*
                     if (humidity.value < 3) {
                         db.getReference("items").child("lamp").setValue("ON")
 
                     } else {
                         db.getReference("items").child("lamp").setValue("OFF")
                     }
+                    */
                 }
             }
         }
@@ -218,14 +256,17 @@ fun HumidityReader(
             // Handle error
         }
     })
-    Text(text = "Humidity: ${humidity.value}")
+    Text(
+        text = "Humidity: ${humidity.value}",
+        fontSize = 18.sp
+    )
     LinearProgressIndicator(progress = humidity.value.toFloat() / 10)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    val db = Firebase.database("https://lab2se-c0094-default-rtdb.europe-west1.firebasedatabase.app/")
+    val db = Firebase.database("https://softwareengineering-d0cdc-default-rtdb.europe-west1.firebasedatabase.app/")
     UnitMobileTheme {
         MyApp(db)
     }
