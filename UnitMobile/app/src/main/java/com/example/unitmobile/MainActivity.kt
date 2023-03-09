@@ -1,5 +1,6 @@
 package com.example.unitmobile
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -18,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -170,6 +172,13 @@ fun HomeScreen(
             db = db,
             humidity = remember { mutableStateOf(0) }
         )
+        Divider(
+            color = Color.Gray,
+            thickness = 1.dp,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp)
+        )
     }
 }
 @Composable
@@ -230,7 +239,8 @@ fun ItemSwitch(
 @Composable
 fun HumidityReader(
     db: FirebaseDatabase,
-    humidity: MutableState<Int>
+    humidity: MutableState<Int>,
+    context: Context = LocalContext.current
 ){
     db.getReference("items").addValueEventListener(object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
@@ -247,6 +257,11 @@ fun HumidityReader(
                         db.getReference("items").child("lamp").setValue("OFF")
                     }
                     */
+
+                    if (humidity.value < 3) {
+                        val notice = MyNotification(context, "Smart House App", "Humidity is low")
+                        notice.fireNotfication()
+                    }
                 }
             }
         }
@@ -261,6 +276,7 @@ fun HumidityReader(
     )
     LinearProgressIndicator(progress = humidity.value.toFloat() / 10)
 }
+
 
 @Preview(showBackground = true)
 @Composable
