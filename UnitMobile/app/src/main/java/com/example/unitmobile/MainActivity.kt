@@ -248,16 +248,6 @@ fun HumidityReader(
                 if (item.key.toString() == "humidity") {
                     humidity.value = item.value.toString().toInt()
 
-                    // Turn on lamp if humidity is below 3
-                    /*
-                    if (humidity.value < 3) {
-                        db.getReference("items").child("lamp").setValue("ON")
-
-                    } else {
-                        db.getReference("items").child("lamp").setValue("OFF")
-                    }
-                    */
-
                     if (humidity.value < 3) {
                         val notice = MyNotification(context, "Smart House App", "Humidity is low")
                         notice.fireNotfication()
@@ -276,7 +266,6 @@ fun HumidityReader(
     )
     LinearProgressIndicator(progress = humidity.value.toFloat() / 10)
 }
-
 
 @Preview(showBackground = true)
 @Composable
