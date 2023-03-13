@@ -170,7 +170,7 @@ fun HomeScreen(
         )
         HumidityReader(
             db = db,
-            humidity = remember { mutableStateOf(0) }
+            humidity = remember { mutableStateOf("DRY") }
         )
         Divider(
             color = Color.Gray,
@@ -239,17 +239,17 @@ fun ItemSwitch(
 @Composable
 fun HumidityReader(
     db: FirebaseDatabase,
-    humidity: MutableState<Int>,
+    humidity: MutableState<String>,
     context: Context = LocalContext.current
 ){
     db.getReference("items").addValueEventListener(object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
             for (item in snapshot.children) {
                 if (item.key.toString() == "humidity") {
-                    humidity.value = item.value.toString().toInt()
+                    humidity.value = item.value.toString()
 
-                    if (humidity.value < 3) {
-                        val notice = MyNotification(context, "Smart House App", "Humidity is low")
+                    if (humidity.value == "DRY") {
+                        val notice = MyNotification(context, "Smart House App", "Soil is dry!")
                         notice.fireNotfication()
                     }
                 }
@@ -264,7 +264,7 @@ fun HumidityReader(
         text = "Humidity: ${humidity.value}",
         fontSize = 18.sp
     )
-    LinearProgressIndicator(progress = humidity.value.toFloat() / 10)
+    LinearProgressIndicator(progress = if (humidity.value == "WET") 1.0f else 0.0f)
 }
 
 @Preview(showBackground = true)
