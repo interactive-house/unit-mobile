@@ -36,7 +36,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val db = Firebase.database("https://softwareengineering-d0cdc-default-rtdb.europe-west1.firebasedatabase.app/")
+        val db = Firebase.database("https://smarthome-3bb7b-default-rtdb.firebaseio.com/")
         setContent {
             UnitMobileTheme {
                 // A surface container using the 'background' color from the theme
@@ -53,19 +53,17 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(db: FirebaseDatabase) {
 
-    val switches = hashMapOf(
-        "lamp" to remember { mutableStateOf(false) },
-        "door" to remember { mutableStateOf(false) },
-        "window" to remember { mutableStateOf(false) },
-    )
+    val lightSwitch = remember { mutableStateOf(false) }
+    var doorSwitch = remember { mutableStateOf(false) }
+    var windowSwitch = remember { mutableStateOf(false) }
 
     val itemStateTrue = listOf(
-        "ON",
-        "OPEN"
+        "on",
+        "open"
     )
     val itemStateFalse = listOf(
-        "OFF",
-        "CLOSED"
+        "off",
+        "closed"
     )
     Scaffold(
         topBar = {
@@ -80,7 +78,7 @@ fun MyApp(db: FirebaseDatabase) {
                     .padding(it),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                HomeScreen(switches, db, itemStateTrue, itemStateFalse)
+                HomeScreen(db, itemStateTrue, itemStateFalse, lightSwitch, doorSwitch, windowSwitch)
             }
         }
     )
@@ -88,15 +86,45 @@ fun MyApp(db: FirebaseDatabase) {
 
 @Composable
 fun HomeScreen(
-    switches: HashMap<String, MutableState<Boolean>>,
     db: FirebaseDatabase,
     itemStateTrue: List<String>,
-    itemStateFalse: List<String>
+    itemStateFalse: List<String>,
+    lightSwitch: MutableState<Boolean>,
+    doorSwitch: MutableState<Boolean>,
+    windowSwitch: MutableState<Boolean>
 ) {
-    db.getReference("items").addValueEventListener(object : ValueEventListener {
+
+    db.getReference("SmartHomeValueLight").addValueEventListener(object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
             for (item in snapshot.children) {
-                switches[item.key.toString()]?.value = item.value.toString() in itemStateTrue
+                lightSwitch.value = itemStateTrue.contains(item.value)
+                Log.d("TAG", "onDataChange: ${item.key}${item.value} ${lightSwitch.value}")
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            // Handle error
+        }
+    })
+
+    db.getReference("SmartHomeValueDoor").addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            for (item in snapshot.children) {
+                doorSwitch.value = itemStateTrue.contains(item.value)
+                Log.d("TAG", "onDataChange: ${item.value} ${lightSwitch.value}")
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            // Handle error
+        }
+    })
+
+    db.getReference("SmartHomeValueWindow").addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            for (item in snapshot.children) {
+                windowSwitch.value = itemStateTrue.contains(item.value)
+                Log.d("TAG", "onDataChange: ${item.key}${item.value} ${lightSwitch.value}")
             }
         }
 
@@ -119,14 +147,15 @@ fun HomeScreen(
             icon = Icons.Filled.Circle,
             label = "Lamp",
             onCheckedChange = { isChecked ->
-                db.getReference("items").child("lamp").setValue(if (isChecked) "ON" else "OFF")
+                db.getReference("SmartHomeValueLight").child("StatusOflight").setValue(if (isChecked) "on" else "off")
             },
-            isChecked = switches["lamp"]?.value ?: false,
+            isChecked = lightSwitch.value,
             imageResOn = R.drawable.lamp_on,
             imageResOff = R.drawable.lamp_off,
             itemStateFalse = itemStateFalse[0],
             itemStateTrue = itemStateTrue[0]
         )
+
         Divider(
             color = Color.Gray,
             thickness = 1.dp,
@@ -137,8 +166,8 @@ fun HomeScreen(
         ItemSwitch(
             icon = Icons.Filled.Circle,
             label = "Door",
-            onCheckedChange = { isChecked -> db.getReference("items").child("door").setValue(if (isChecked) "OPEN" else "CLOSED") },
-            isChecked = switches["door"]?.value ?: false,
+            onCheckedChange = { isChecked -> db.getReference("SmartHomeValueDoor").child("StatusOfDoor").setValue(if (isChecked) "open" else "closed") },
+            isChecked = doorSwitch.value,
             imageResOn = R.drawable.door_open,
             imageResOff = R.drawable.door_closed,
             itemStateFalse = itemStateFalse[1],
@@ -154,8 +183,8 @@ fun HomeScreen(
         ItemSwitch(
             icon = Icons.Filled.Circle,
             label = "Window",
-            onCheckedChange = { isChecked -> db.getReference("items").child("window").setValue(if (isChecked) "OPEN" else "CLOSED") },
-            isChecked = switches["window"]?.value ?: false,
+            onCheckedChange = { isChecked -> db.getReference("SmartHomeValueWindow").child("StatusOfWindow").setValue(if (isChecked) "open" else "closed") },
+            isChecked = windowSwitch.value,
             imageResOn = R.drawable.window_open,
             imageResOff = R.drawable.window_closed,
             itemStateFalse = itemStateFalse[1],
@@ -170,7 +199,7 @@ fun HomeScreen(
         )
         HumidityReader(
             db = db,
-            humidity = remember { mutableStateOf("DRY") }
+            humidity = remember { mutableStateOf("dry") }
         )
         Divider(
             color = Color.Gray,
@@ -201,6 +230,7 @@ fun ItemSwitch(
     itemStateFalse: String,
     itemStateTrue: String
 ) {
+
     val tint = if (isChecked) Color(0xFF4CAF50) else Color.Red
     val imageRes = if (isChecked) imageResOn else imageResOff
     val itemState = if (isChecked) "$label is $itemStateTrue" else "$label is $itemStateFalse"
@@ -242,13 +272,14 @@ fun HumidityReader(
     humidity: MutableState<String>,
     context: Context = LocalContext.current
 ){
-    db.getReference("items").addValueEventListener(object : ValueEventListener {
+    db.getReference("SmartHomeValueSoil").addValueEventListener(object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
             for (item in snapshot.children) {
-                if (item.key.toString() == "humidity") {
+                Log.d("TAG", "onDataChange: ${item.key} ${item.value} ${humidity.value}")
+                if (item.key.toString() == "StatusOfSoil") {
                     humidity.value = item.value.toString()
 
-                    if (humidity.value == "DRY") {
+                    if (humidity.value == "dry") {
                         val notice = MyNotification(context, "Smart House App", "Soil is dry!")
                         notice.fireNotfication()
                     }
@@ -264,13 +295,13 @@ fun HumidityReader(
         text = "Humidity: ${humidity.value}",
         fontSize = 18.sp
     )
-    LinearProgressIndicator(progress = if (humidity.value == "WET") 1.0f else 0.0f)
+    LinearProgressIndicator(progress = if (humidity.value == "wet") 1.0f else 0.0f)
 }
 
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
-    val db = Firebase.database("https://softwareengineering-d0cdc-default-rtdb.europe-west1.firebasedatabase.app/")
+    val db = Firebase.database("https://smarthome-3bb7b-default-rtdb.firebaseio.com/")
     UnitMobileTheme {
         MyApp(db)
     }
