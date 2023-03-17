@@ -54,8 +54,8 @@ class MainActivity : ComponentActivity() {
 fun MyApp(db: FirebaseDatabase) {
 
     val lightSwitch = remember { mutableStateOf(false) }
-    var doorSwitch = remember { mutableStateOf(false) }
-    var windowSwitch = remember { mutableStateOf(false) }
+    val doorSwitch = remember { mutableStateOf(false) }
+    val windowSwitch = remember { mutableStateOf(false) }
 
     val itemStateTrue = listOf(
         "on",
