@@ -53,10 +53,6 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(db: FirebaseDatabase) {
 
-    val lightSwitch = remember { mutableStateOf(false) }
-    val doorSwitch = remember { mutableStateOf(false) }
-    val windowSwitch = remember { mutableStateOf(false) }
-
     val itemStateTrue = listOf(
         "on",
         "open"
@@ -78,7 +74,7 @@ fun MyApp(db: FirebaseDatabase) {
                     .padding(it),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                HomeScreen(db, itemStateTrue, itemStateFalse, lightSwitch, doorSwitch, windowSwitch)
+                HomeScreen(db, itemStateTrue, itemStateFalse)
             }
         }
     )
@@ -88,50 +84,12 @@ fun MyApp(db: FirebaseDatabase) {
 fun HomeScreen(
     db: FirebaseDatabase,
     itemStateTrue: List<String>,
-    itemStateFalse: List<String>,
-    lightSwitch: MutableState<Boolean>,
-    doorSwitch: MutableState<Boolean>,
-    windowSwitch: MutableState<Boolean>
+    itemStateFalse: List<String>
 ) {
+    val lightSwitch = remember { mutableStateOf(false) }
+    val doorSwitch = remember { mutableStateOf(false) }
+    val windowSwitch = remember { mutableStateOf(false) }
 
-    db.getReference("SmartHomeValueLight").addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            for (item in snapshot.children) {
-                lightSwitch.value = itemStateTrue.contains(item.value)
-                Log.d("TAG", "onDataChange: ${item.key}${item.value} ${lightSwitch.value}")
-            }
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            // Handle error
-        }
-    })
-
-    db.getReference("SmartHomeValueDoor").addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            for (item in snapshot.children) {
-                doorSwitch.value = itemStateTrue.contains(item.value)
-                Log.d("TAG", "onDataChange: ${item.value} ${lightSwitch.value}")
-            }
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            // Handle error
-        }
-    })
-
-    db.getReference("SmartHomeValueWindow").addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            for (item in snapshot.children) {
-                windowSwitch.value = itemStateTrue.contains(item.value)
-                Log.d("TAG", "onDataChange: ${item.key}${item.value} ${lightSwitch.value}")
-            }
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            // Handle error
-        }
-    })
     Column() {
         TitleHomeScreen("Smart House App")
     }
@@ -153,7 +111,10 @@ fun HomeScreen(
             imageResOn = R.drawable.lamp_on,
             imageResOff = R.drawable.lamp_off,
             itemStateFalse = itemStateFalse[0],
-            itemStateTrue = itemStateTrue[0]
+            itemStateTrue = itemStateTrue[0],
+            switch = lightSwitch,
+            db = db,
+            reference = "SmartHomeValueLight"
         )
 
         Divider(
@@ -171,7 +132,10 @@ fun HomeScreen(
             imageResOn = R.drawable.door_open,
             imageResOff = R.drawable.door_closed,
             itemStateFalse = itemStateFalse[1],
-            itemStateTrue = itemStateTrue[1]
+            itemStateTrue = itemStateTrue[1],
+            switch = doorSwitch,
+            db = db,
+            reference = "SmartHomeValueDoor"
         )
         Divider(
             color = Color.Gray,
@@ -188,7 +152,10 @@ fun HomeScreen(
             imageResOn = R.drawable.window_open,
             imageResOff = R.drawable.window_closed,
             itemStateFalse = itemStateFalse[1],
-            itemStateTrue = itemStateTrue[1]
+            itemStateTrue = itemStateTrue[1],
+            switch = windowSwitch,
+            db = db,
+            reference = "SmartHomeValueWindow"
         )
         Divider(
             color = Color.Gray,
@@ -228,12 +195,28 @@ fun ItemSwitch(
     imageResOn: Int,
     imageResOff: Int,
     itemStateFalse: String,
-    itemStateTrue: String
+    itemStateTrue: String,
+    switch: MutableState<Boolean>,
+    db: FirebaseDatabase,
+    reference: String
 ) {
 
     val tint = if (isChecked) Color(0xFF4CAF50) else Color.Red
     val imageRes = if (isChecked) imageResOn else imageResOff
     val itemState = if (isChecked) "$label is $itemStateTrue" else "$label is $itemStateFalse"
+
+    db.getReference(reference).addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            for (item in snapshot.children) {
+                switch.value = (itemStateTrue == item.value)
+                Log.d("TAG", "onDataChange: ${item.key}${item.value} ${switch.value}")
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            // Handle error
+        }
+    })
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
