@@ -1,0 +1,41 @@
+package com.example.unitmobile
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Divider
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.google.firebase.database.FirebaseDatabase
+
+@Composable
+fun HomeScreen(
+    db: FirebaseDatabase,
+    itemStateTrue: List<String>,
+    itemStateFalse: List<String>
+) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Smart House App",
+            fontSize = 24.sp,
+            modifier = Modifier.padding(vertical = 8.dp)
+        )
+        LampSwitch(db, itemStateTrue[0], itemStateFalse[0])
+        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        DoorSwitch(db, itemStateTrue[1], itemStateFalse[1])
+        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        WindowSwitch(db, itemStateTrue[1], itemStateFalse[1])
+        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        HumidityReader(db = db)
+        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        MediaControls(db = db)
+    }
+}
