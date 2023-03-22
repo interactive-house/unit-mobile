@@ -247,6 +247,9 @@ fun HumidityReader(
                     if (humidity.value == "dry") {
                         val notice = MyNotification(context, "Smart House App", "Soil is dry!")
                         notice.fireNotfication()
+                    } else if (humidity.value == "wet") {
+                        val notice = MyNotification(context, "Smart House App", "Soil is wet!")
+                        notice.fireNotfication()
                     }
                 }
             }
