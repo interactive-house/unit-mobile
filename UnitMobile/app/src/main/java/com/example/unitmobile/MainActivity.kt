@@ -10,17 +10,18 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.HorizontalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -31,6 +32,8 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import org.intellij.lang.annotations.JdkConstants
+import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,7 +42,6 @@ class MainActivity : ComponentActivity() {
         val db = Firebase.database("https://smarthome-3bb7b-default-rtdb.firebaseio.com/")
         setContent {
             UnitMobileTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
@@ -86,7 +88,10 @@ fun HomeScreen(
     itemStateTrue: List<String>,
     itemStateFalse: List<String>
 ) {
-    Column(Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         TitleHomeScreen("Smart House App")
         LampSwitch(db, itemStateTrue[0], itemStateFalse[0])
         Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
@@ -96,6 +101,7 @@ fun HomeScreen(
         Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
         HumidityReader(db = db)
         Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        //MediaController(db = db)
     }
 }
 @Composable
@@ -195,7 +201,7 @@ fun ItemSwitch(
         }
 
         override fun onCancelled(error: DatabaseError) {
-            // Handle error
+            Log.d("TAG", "onCancelled: ${error.message}")
         }
     })
 
@@ -251,12 +257,13 @@ fun HumidityReader(
                         val notice = MyNotification(context, "Smart House App", "Soil is wet!")
                         notice.fireNotfication()
                     }
+
                 }
             }
         }
 
         override fun onCancelled(error: DatabaseError) {
-            // Handle error
+            Log.d("TAG", "onCancelled: ${error.message}")
         }
     })
     Text(
@@ -264,6 +271,119 @@ fun HumidityReader(
         fontSize = 18.sp
     )
     LinearProgressIndicator(progress = if (humidity.value == "wet") 1.0f else 0.0f)
+}
+
+@Composable
+fun MediaController(db: FirebaseDatabase) {
+    val currentTrack = remember { mutableStateOf("No track") }
+    val deviceStatus = remember { mutableStateOf("No device") }
+    val status = remember { mutableStateOf("No status") }
+    val songList = remember { mutableStateListOf<String>() }
+
+    val songListRef = db.getReference("simulatedDevices").child("songList")
+    val currentTrackRef = db.getReference("simulatedDevices").child("currentTrack")
+    val deviceStatusRef = db.getReference("simulatedDevices").child("deviceStatus")
+    val statusRef = db.getReference("simulatedDevices").child("status")
+
+    songListRef.addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            songList.clear()
+            for (song in snapshot.children) {
+                songList.add(song.getValue(String::class.java)!!)
+            }
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+        }
+    })
+
+    currentTrackRef.addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            currentTrack.value = snapshot.getValue(String::class.java)!!
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+        }
+    })
+
+    deviceStatusRef.addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            deviceStatus.value = snapshot.getValue(String::class.java)!!
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+        }
+    })
+
+    statusRef.addValueEventListener(object : ValueEventListener {
+        override fun onDataChange(snapshot: DataSnapshot) {
+            status.value = snapshot.getValue(String::class.java)!!
+        }
+
+        override fun onCancelled(error: DatabaseError) {
+            Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+        }
+    })
+
+
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = "Media Controller",
+            fontSize = 24.sp,
+            style = TextStyle(textDecoration = TextDecoration.Underline)
+
+        )
+        Text(
+            text = "Current track: ${currentTrack.value}",
+            fontSize = 18.sp
+        )
+        Text(
+            text = "Device status: ${deviceStatus.value}",
+            fontSize = 18.sp
+        )
+        Text(
+            text = "Status: ${status.value}",
+            fontSize = 18.sp
+        )
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            Button(
+                onClick = {
+                    statusRef.setValue("play")
+                },
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Text(text = "Play")
+            }
+            Button(
+                onClick = {
+                    statusRef.setValue("pause")
+                },
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Text(text = "Pause")
+            }
+            Button(
+                onClick = {
+                    statusRef.setValue("stop")
+                },
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Text(text = "Stop")
+            }
+        }
+        Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        songList.forEach {
+            Text(text = it)
+        }
+    }
 }
 
 @Preview(showBackground = true)
