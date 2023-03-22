@@ -11,6 +11,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import com.example.unitmobile.ui.theme.UnitMobileTheme
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
@@ -101,18 +103,18 @@ fun HomeScreen(
         Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
         HumidityReader(db = db)
         Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
-        //MediaController(db = db)
+        MediaController(db = db)
     }
 }
 @Composable
 fun LampSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: String) {
-    val switch = remember { mutableStateOf(false) }
-
+    val switch = rememberSaveable { mutableStateOf(false) }
+    val reference = db.getReference("SmartHomeValueLight").child("StatusOflight")
     ItemSwitch(
         icon = Icons.Filled.Circle,
         label = "Lamp",
         onCheckedChange = { isChecked ->
-            db.getReference("SmartHomeValueLight").child("StatusOflight").setValue(if (isChecked) "on" else "off")
+            reference.setValue(if (isChecked) "on" else "off")
         },
         isChecked = switch.value,
         imageResOn = R.drawable.lamp_on,
@@ -120,19 +122,18 @@ fun LampSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: Stri
         itemStateFalse = itemStateFalse,
         itemStateTrue = itemStateTrue,
         switch = switch,
-        db = db,
-        reference = "SmartHomeValueLight"
+        reference = reference
     )
 }
 @Composable
 fun DoorSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: String) {
-    val switch = remember { mutableStateOf(false) }
-
+    val switch = rememberSaveable { mutableStateOf(false) }
+    val reference = db.getReference("SmartHomeValueDoor").child("StatusOfDoor")
     ItemSwitch(
         icon = Icons.Filled.Circle,
         label = "Door",
         onCheckedChange = { isChecked ->
-            db.getReference("SmartHomeValueDoor").child("StatusOfDoor").setValue(if (isChecked) "open" else "closed")
+            reference.setValue(if (isChecked) "open" else "closed")
         },
         isChecked = switch.value,
         imageResOn = R.drawable.door_open,
@@ -140,19 +141,18 @@ fun DoorSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: Stri
         itemStateFalse = itemStateFalse,
         itemStateTrue = itemStateTrue,
         switch = switch,
-        db = db,
-        reference = "SmartHomeValueDoor"
+        reference = reference
     )
 }
 @Composable
 fun WindowSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: String) {
-    val switch = remember { mutableStateOf(false) }
-
+    val switch = rememberSaveable { mutableStateOf(false) }
+    val reference = db.getReference("SmartHomeValueWindow").child("StatusOfWindow")
     ItemSwitch(
         icon = Icons.Filled.Circle,
         label = "Window",
         onCheckedChange = { isChecked ->
-            db.getReference("SmartHomeValueWindow").child("StatusOfWindow").setValue(if (isChecked) "open" else "closed")
+            reference.setValue(if (isChecked) "open" else "closed")
         },
         isChecked = switch.value,
         imageResOn = R.drawable.window_open,
@@ -160,8 +160,7 @@ fun WindowSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: St
         itemStateFalse = itemStateFalse,
         itemStateTrue = itemStateTrue,
         switch = switch,
-        db = db,
-        reference = "SmartHomeValueWindow"
+        reference = reference
     )
 }
 @Composable
@@ -184,22 +183,18 @@ fun ItemSwitch(
     itemStateFalse: String,
     itemStateTrue: String,
     switch: MutableState<Boolean>,
-    db: FirebaseDatabase,
-    reference: String
+    reference: DatabaseReference
 ) {
 
     val tint = if (isChecked) Color(0xFF4CAF50) else Color.Red
     val imageRes = if (isChecked) imageResOn else imageResOff
     val itemState = if (isChecked) "$label is $itemStateTrue" else "$label is $itemStateFalse"
 
-    db.getReference(reference).addValueEventListener(object : ValueEventListener {
+    reference.addValueEventListener(object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
-            for (item in snapshot.children) {
-                switch.value = (itemStateTrue == item.value)
-                Log.d("TAG", "onDataChange: ${item.key}${item.value} ${switch.value}")
-            }
+            switch.value = (itemStateTrue == snapshot.value.toString())
+            Log.d("TAG", "onDataChange: ${snapshot.key}${snapshot.value}")
         }
-
         override fun onCancelled(error: DatabaseError) {
             Log.d("TAG", "onCancelled: ${error.message}")
         }
@@ -241,31 +236,25 @@ fun HumidityReader(
     db: FirebaseDatabase,
     context: Context = LocalContext.current
 ){
-    val humidity = remember { mutableStateOf("dry") }
+    val humidity = rememberSaveable { mutableStateOf("") }
 
-    db.getReference("SmartHomeValueSoil").addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            for (item in snapshot.children) {
-                Log.d("TAG", "onDataChange: ${item.key} ${item.value} ${humidity.value}")
-                if (item.key.toString() == "StatusOfSoil") {
-                    humidity.value = item.value.toString()
-
-                    if (humidity.value == "dry") {
-                        val notice = MyNotification(context, "Smart House App", "Soil is dry!")
-                        notice.fireNotfication()
-                    } else if (humidity.value == "wet") {
-                        val notice = MyNotification(context, "Smart House App", "Soil is wet!")
-                        notice.fireNotfication()
-                    }
-
+    if (humidity.value == "") {
+        db.getReference("SmartHomeValueSoil").child("StatusOfSoil").addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                humidity.value = snapshot.value.toString()
+                if (humidity.value == "dry") {
+                    val notice = MyNotification(context, "Smart House App", "Soil is dry!")
+                    notice.fireNotfication()
+                } else if (humidity.value == "wet") {
+                    val notice = MyNotification(context, "Smart House App", "Soil is wet!")
+                    notice.fireNotfication()
                 }
             }
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            Log.d("TAG", "onCancelled: ${error.message}")
-        }
-    })
+            override fun onCancelled(error: DatabaseError) {
+                Log.d("TAG", "onCancelled: ${error.message}")
+            }
+        })
+    }
     Text(
         text = "Humidity: ${humidity.value}",
         fontSize = 18.sp
@@ -275,60 +264,29 @@ fun HumidityReader(
 
 @Composable
 fun MediaController(db: FirebaseDatabase) {
-    val currentTrack = remember { mutableStateOf("No track") }
-    val deviceStatus = remember { mutableStateOf("No device") }
-    val status = remember { mutableStateOf("No status") }
+    val currentTrack = rememberSaveable { mutableStateOf("No track") }
+    val deviceStatus = rememberSaveable { mutableStateOf("No device") }
+    val status = rememberSaveable { mutableStateOf("No status") }
     val songList = remember { mutableStateListOf<String>() }
 
     val songListRef = db.getReference("simulatedDevices").child("songList")
-    val currentTrackRef = db.getReference("simulatedDevices").child("currentTrack")
-    val deviceStatusRef = db.getReference("simulatedDevices").child("deviceStatus")
     val statusRef = db.getReference("simulatedDevices").child("status")
+    val simulatedDevicesRef = db.getReference("simulatedDevices")
 
-    songListRef.addValueEventListener(object : ValueEventListener {
+    simulatedDevicesRef.addValueEventListener(object : ValueEventListener {
         override fun onDataChange(snapshot: DataSnapshot) {
-            songList.clear()
-            for (song in snapshot.children) {
-                songList.add(song.getValue(String::class.java)!!)
-            }
+            currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
+            deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
+            status.value = snapshot.child("status").getValue(String::class.java)!!
+            Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
+            Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
+            Log.d("onDataChangeMedia", "Status: ${status.value}")
         }
 
         override fun onCancelled(error: DatabaseError) {
             Log.w("onCancelledMedia", "Failed to read value.", error.toException())
         }
     })
-
-    currentTrackRef.addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            currentTrack.value = snapshot.getValue(String::class.java)!!
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            Log.w("onCancelledMedia", "Failed to read value.", error.toException())
-        }
-    })
-
-    deviceStatusRef.addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            deviceStatus.value = snapshot.getValue(String::class.java)!!
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            Log.w("onCancelledMedia", "Failed to read value.", error.toException())
-        }
-    })
-
-    statusRef.addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            status.value = snapshot.getValue(String::class.java)!!
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-            Log.w("onCancelledMedia", "Failed to read value.", error.toException())
-        }
-    })
-
-
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
