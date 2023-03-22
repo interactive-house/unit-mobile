@@ -1,4 +1,4 @@
-package com.example.unitmobile
+package com.example.unitmobile.components
 
 import android.util.Log
 import androidx.compose.foundation.Image

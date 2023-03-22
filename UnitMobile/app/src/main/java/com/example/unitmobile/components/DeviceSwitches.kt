@@ -1,10 +1,11 @@
-package com.example.unitmobile
+package com.example.unitmobile.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.unitmobile.R
 import com.google.firebase.database.FirebaseDatabase
 
 @Composable
