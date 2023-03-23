@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,7 +38,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(db: FirebaseDatabase) {
 
-    var shouldShowLogin by remember {
+    var shouldShowLogin by rememberSaveable {
         mutableStateOf(true)
     }
 
