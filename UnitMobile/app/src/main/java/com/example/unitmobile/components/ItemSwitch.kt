@@ -9,6 +9,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,15 +42,25 @@ fun ItemSwitch(
     val imageRes = if (isChecked) imageResOn else imageResOff
     val itemState = if (isChecked) "$label is $itemStateTrue" else "$label is $itemStateFalse"
 
-    reference.addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            switch.value = (itemStateTrue == snapshot.value.toString())
-            Log.d("TAG", "onDataChange: ${snapshot.key}${snapshot.value}")
+    DisposableEffect(reference) {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                switch.value = (itemStateTrue == snapshot.value.toString())
+                Log.d("TAG", "onDataChange: ${snapshot.key}${snapshot.value}")
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.d("TAG", "onCancelled: ${error.message}")
+            }
         }
-        override fun onCancelled(error: DatabaseError) {
-            Log.d("TAG", "onCancelled: ${error.message}")
+
+        reference.addValueEventListener(listener)
+
+        onDispose {
+            reference.removeEventListener(listener)
         }
-    })
+    }
+
 
     Row(
         verticalAlignment = Alignment.CenterVertically,

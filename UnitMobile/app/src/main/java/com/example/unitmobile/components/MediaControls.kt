@@ -2,12 +2,11 @@ package com.example.unitmobile.components
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,26 +25,32 @@ fun MediaControls(db: FirebaseDatabase) {
     val currentTrack = rememberSaveable { mutableStateOf("No track") }
     val deviceStatus = rememberSaveable { mutableStateOf("No device") }
     val status = rememberSaveable { mutableStateOf("No status") }
-    val songList = remember { mutableStateListOf<String>() }
 
-    val songListRef = db.getReference("simulatedDevices").child("songList")
     val statusRef = db.getReference("simulatedDevices").child("status")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
 
-    simulatedDevicesRef.addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
-            deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
-            status.value = snapshot.child("status").getValue(String::class.java)!!
-            Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
-            Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
-            Log.d("onDataChangeMedia", "Status: ${status.value}")
+    DisposableEffect(simulatedDevicesRef) {
+        val listener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
+                deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
+                status.value = snapshot.child("status").getValue(String::class.java)!!
+                Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
+                Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
+                Log.d("onDataChangeMedia", "Status: ${status.value}")
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+            }
         }
 
-        override fun onCancelled(error: DatabaseError) {
-            Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+        simulatedDevicesRef.addValueEventListener(listener)
+
+        onDispose {
+            simulatedDevicesRef.removeEventListener(listener)
         }
-    })
+    }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
@@ -95,10 +100,42 @@ fun MediaControls(db: FirebaseDatabase) {
             ) {
                 Text(text = "Stop")
             }
+
         }
-        Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        songList.forEach {
-            Text(text = it)
+        SongList(db = db)
+
+    }
+}
+
+@Composable
+fun SongList(db: FirebaseDatabase) {
+    val songList = remember { mutableStateListOf<String>() }
+
+    val songListRef = db.getReference("simulatedDevices").child("songList")
+
+    DisposableEffect(songListRef) {
+        val valueEventListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                songList.clear()
+                snapshot.children.forEach {
+                    songList.add(it.value.toString())
+                }
+                Log.d("onDataChangeMedia", "Song list: ${songList.toList()}")
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+            }
         }
+        songListRef.addValueEventListener(valueEventListener)
+        onDispose {
+            songListRef.removeEventListener(valueEventListener)
+        }
+
+    }
+
+    Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+    songList.forEach {
+        Text(text = it)
     }
 }

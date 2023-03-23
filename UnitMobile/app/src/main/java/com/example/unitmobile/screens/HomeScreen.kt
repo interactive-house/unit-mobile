@@ -3,6 +3,8 @@ package com.example.unitmobile.screens
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +25,9 @@ fun HomeScreen(
     Column(
         Modifier
             .fillMaxSize()
-            .padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState())
+        , horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
             text = "Smart House App",
             fontSize = 24.sp,

@@ -9,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import com.example.unitmobile.screens.HomeScreen
 import com.example.unitmobile.ui.theme.UnitMobileTheme
 import com.google.firebase.database.FirebaseDatabase
@@ -36,6 +37,10 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp(db: FirebaseDatabase) {
 
+    var shouldShowLogin by remember {
+        mutableStateOf(true)
+    }
+
     val itemStateTrue = listOf(
         "on",
         "open"
@@ -57,11 +62,37 @@ fun MyApp(db: FirebaseDatabase) {
                     .padding(it),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                HomeScreen(db, itemStateTrue, itemStateFalse)
+                if (shouldShowLogin) {
+                    LoginScreen( onLoginClicked = { shouldShowLogin = false })
+                } else {
+                    HomeScreen(db, itemStateTrue, itemStateFalse)
+                }
             }
         }
     )
 }
+
+@Composable
+fun LoginScreen(
+    onLoginClicked: () -> Unit,
+    modifier: Modifier = Modifier
+){
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text("Welcome to Smart House App")
+        Button(
+            modifier = Modifier.padding(vertical = 24.dp),
+            onClick = onLoginClicked
+        ) {
+            Text("Login")
+        }
+    }
+}
+
+
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
