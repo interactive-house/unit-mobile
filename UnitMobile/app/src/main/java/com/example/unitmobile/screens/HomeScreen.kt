@@ -34,13 +34,17 @@ fun HomeScreen(
             modifier = Modifier.padding(vertical = 8.dp)
         )
         LampSwitch(db, itemStateTrue[0], itemStateFalse[0])
-        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        ItemDivider()
         DoorSwitch(db, itemStateTrue[1], itemStateFalse[1])
-        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        ItemDivider()
         WindowSwitch(db, itemStateTrue[1], itemStateFalse[1])
-        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        ItemDivider()
         HumidityReader(db = db)
-        Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
+        ItemDivider()
         MediaControls(db = db)
     }
+}
+@Composable
+fun ItemDivider() {
+    Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
 }

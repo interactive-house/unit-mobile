@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Circle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
@@ -26,9 +28,7 @@ import com.google.firebase.database.ValueEventListener
 
 @Composable
 fun ItemSwitch(
-    icon: ImageVector,
     label: String,
-    onCheckedChange: (Boolean) -> Unit,
     isChecked: Boolean,
     imageResOn: Int,
     imageResOff: Int,
@@ -67,7 +67,7 @@ fun ItemSwitch(
         modifier = Modifier.padding(vertical = 8.dp)
     ) {
         Icon(
-            icon,
+            Icons.Filled.Circle,
             contentDescription = label,
             tint = tint,
             modifier = Modifier.size(24.dp)
@@ -80,7 +80,9 @@ fun ItemSwitch(
         )
         Switch(
             checked = isChecked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = { isChecked ->
+                reference.setValue(if (isChecked) itemStateTrue else itemStateFalse)
+            },
             modifier = Modifier.padding(horizontal = 8.dp)
         )
 

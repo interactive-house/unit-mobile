@@ -13,11 +13,7 @@ fun LampSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: Stri
     val switch = rememberSaveable { mutableStateOf(false) }
     val reference = db.getReference("SmartHomeValueLight").child("StatusOflight")
     ItemSwitch(
-        icon = Icons.Filled.Circle,
         label = "Lamp",
-        onCheckedChange = { isChecked ->
-            reference.setValue(if (isChecked) "on" else "off")
-        },
         isChecked = switch.value,
         imageResOn = R.drawable.lamp_on,
         imageResOff = R.drawable.lamp_off,
@@ -32,11 +28,7 @@ fun DoorSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: Stri
     val switch = rememberSaveable { mutableStateOf(false) }
     val reference = db.getReference("SmartHomeValueDoor").child("StatusOfDoor")
     ItemSwitch(
-        icon = Icons.Filled.Circle,
         label = "Door",
-        onCheckedChange = { isChecked ->
-            reference.setValue(if (isChecked) "open" else "closed")
-        },
         isChecked = switch.value,
         imageResOn = R.drawable.door_open,
         imageResOff = R.drawable.door_closed,
@@ -51,11 +43,7 @@ fun WindowSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: St
     val switch = rememberSaveable { mutableStateOf(false) }
     val reference = db.getReference("SmartHomeValueWindow").child("StatusOfWindow")
     ItemSwitch(
-        icon = Icons.Filled.Circle,
         label = "Window",
-        onCheckedChange = { isChecked ->
-            reference.setValue(if (isChecked) "open" else "closed")
-        },
         isChecked = switch.value,
         imageResOn = R.drawable.window_open,
         imageResOff = R.drawable.window_closed,
