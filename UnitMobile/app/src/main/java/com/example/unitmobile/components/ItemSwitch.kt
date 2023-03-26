@@ -45,7 +45,7 @@ fun ItemSwitch(
     DisposableEffect(reference) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                switch.value = (itemStateTrue == snapshot.value.toString())
+                switch.value = (itemStateTrue == snapshot.value.toString().lowercase())
                 Log.d("TAG", "onDataChange: ${snapshot.key}${snapshot.value}")
             }
 

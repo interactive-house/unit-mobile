@@ -9,9 +9,15 @@ import com.example.unitmobile.R
 import com.google.firebase.database.FirebaseDatabase
 
 @Composable
-fun LampSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: String) {
+fun LampSwitch(
+    db: FirebaseDatabase,
+    itemStateTrue: String,
+    itemStateFalse: String
+) {
     val switch = rememberSaveable { mutableStateOf(false) }
-    val reference = db.getReference("SmartHomeValueLight").child("StatusOflight")
+    val reference = db
+        .getReference("SmartHomeValueLight")
+        .child("StatusOflight")
     ItemSwitch(
         label = "Lamp",
         isChecked = switch.value,
@@ -24,9 +30,15 @@ fun LampSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: Stri
     )
 }
 @Composable
-fun DoorSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: String) {
+fun DoorSwitch(
+    db: FirebaseDatabase,
+    itemStateTrue: String,
+    itemStateFalse: String
+) {
     val switch = rememberSaveable { mutableStateOf(false) }
-    val reference = db.getReference("SmartHomeValueDoor").child("StatusOfDoor")
+    val reference = db
+        .getReference("SmartHomeValueDoor")
+        .child("StatusOfDoor")
     ItemSwitch(
         label = "Door",
         isChecked = switch.value,
@@ -41,7 +53,9 @@ fun DoorSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: Stri
 @Composable
 fun WindowSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: String) {
     val switch = rememberSaveable { mutableStateOf(false) }
-    val reference = db.getReference("SmartHomeValueWindow").child("StatusOfWindow")
+    val reference = db
+        .getReference("SmartHomeValueWindow")
+        .child("StatusOfWindow")
     ItemSwitch(
         label = "Window",
         isChecked = switch.value,
