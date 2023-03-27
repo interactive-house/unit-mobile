@@ -41,11 +41,15 @@ fun MediaControls(db: FirebaseDatabase) {
     DisposableEffect(songListRef) {
         val valueEventListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                songList.clear()
-                snapshot.children.forEach {
-                    songList.add(it.value.toString())
+                try {
+                    songList.clear()
+                    snapshot.children.forEach {
+                        songList.add(it.value.toString())
+                    }
+                    Log.d("onDataChangeMedia", "Song list: ${songList.toList()}")
+                } catch (e: Exception) {
+                    Log.d("onDataChangeMedia", "Error: ${e.message}")
                 }
-                Log.d("onDataChangeMedia", "Song list: ${songList.toList()}")
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -62,12 +66,16 @@ fun MediaControls(db: FirebaseDatabase) {
     DisposableEffect(simulatedDevicesRef) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
-                deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
-                status.value = snapshot.child("status").getValue(String::class.java)!!
-                Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
-                Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
-                Log.d("onDataChangeMedia", "Status: ${status.value}")
+                try {
+                    currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
+                    deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
+                    status.value = snapshot.child("status").getValue(String::class.java)!!
+                    Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
+                    Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
+                    Log.d("onDataChangeMedia", "Status: ${status.value}")
+                } catch (e: Exception) {
+                    Log.d("onDataChangeMedia", "Error: ${e.message}")
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
