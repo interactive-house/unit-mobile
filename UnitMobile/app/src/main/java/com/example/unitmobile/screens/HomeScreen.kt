@@ -41,7 +41,7 @@ fun HomeScreen(
         ItemDivider()
         HumidityReader(db = db)
         ItemDivider()
-        MediaControls(db = db)
+        //MediaControls(db = db)
     }
 }
 @Composable

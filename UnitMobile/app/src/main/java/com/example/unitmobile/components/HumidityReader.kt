@@ -72,16 +72,16 @@ fun sendNotification(
         val notice = MyNotification(context,
             "Humidity is dry",
             "Humidity is too low")
-        notice.fireNotfication()
+        notice.fireNotification()
     } else if (humidityValue.lowercase() == "wet") {
         val notice = MyNotification(context,
             "Humidity is wet",
             "Humidity is too high")
-        notice.fireNotfication()
+        notice.fireNotification()
     } else {
         val notice = MyNotification(context,
             "Humidity is perfect",
             "Humidity is just right")
-        notice.fireNotfication()
+        notice.fireNotification()
     }
 }

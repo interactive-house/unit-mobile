@@ -15,12 +15,13 @@ class MyNotification(var context: Context, var title: String, var msg: String) {
     val notificationManager = context.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     lateinit var notificationChannel: NotificationChannel
     lateinit var notificationBuilder: NotificationCompat.Builder
-    fun fireNotfication(){
+    fun fireNotification(){
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
             notificationChannel = NotificationChannel(channelID, channelName, NotificationManager.IMPORTANCE_HIGH)
             notificationManager.createNotificationChannel(notificationChannel)
         }
         val intent = Intent(context, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
         notificationBuilder = NotificationCompat.Builder(context, channelID)
             .setSmallIcon(android.R.drawable.ic_dialog_info)
@@ -32,6 +33,4 @@ class MyNotification(var context: Context, var title: String, var msg: String) {
 
         notificationManager.notify(100, notificationBuilder.build())
     }
-
-
 }
