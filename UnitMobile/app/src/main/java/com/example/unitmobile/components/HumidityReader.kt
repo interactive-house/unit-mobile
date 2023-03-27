@@ -64,15 +64,24 @@ fun HumidityReader(
         else -> 0.0f
     })
 }
-fun sendNotification(context: Context, humidityValue: String) {
+fun sendNotification(
+    context: Context,
+    humidityValue: String
+) {
     if (humidityValue.lowercase() == "dry") {
-        val notice = MyNotification(context, "Humidity is dry", "Humidity is too low")
+        val notice = MyNotification(context,
+            "Humidity is dry",
+            "Humidity is too low")
         notice.fireNotfication()
     } else if (humidityValue.lowercase() == "wet") {
-        val notice = MyNotification(context, "Humidity is wet", "Humidity is too high")
+        val notice = MyNotification(context,
+            "Humidity is wet",
+            "Humidity is too high")
         notice.fireNotfication()
     } else {
-        val notice = MyNotification(context, "Humidity is perfect", "Humidity is just right")
+        val notice = MyNotification(context,
+            "Humidity is perfect",
+            "Humidity is just right")
         notice.fireNotfication()
     }
 }
