@@ -160,10 +160,10 @@ fun MediaControls(db: FirebaseDatabase) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
             }
         }
-        Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        /*Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         songList.forEach {
             Text(text = it)
-        }
+        }*/
 
     }
 }
