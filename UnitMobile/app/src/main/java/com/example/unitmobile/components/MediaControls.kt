@@ -23,6 +23,7 @@ import com.google.firebase.database.ValueEventListener
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import java.util.UUID
 
 
 @Composable
@@ -31,7 +32,8 @@ fun MediaControls(db: FirebaseDatabase) {
     val deviceStatus = rememberSaveable { mutableStateOf("No device") }
     val status = rememberSaveable { mutableStateOf("No status") }
 
-    val statusRef = db.getReference("simulatedDevices").child("status")
+    val idRef = db.getReference("simulatedDevices").child("action").child("id")
+    val statusRef = db.getReference("simulatedDevices").child("action")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
 
     val songList = remember { mutableStateListOf<String>() }
@@ -67,9 +69,9 @@ fun MediaControls(db: FirebaseDatabase) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
-                    currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
+                    currentTrack.value = snapshot.child("action").child("track").getValue(String::class.java)!!
                     deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
-                    status.value = snapshot.child("status").getValue(String::class.java)!!
+                    status.value = snapshot.child("action").child("type").getValue(String::class.java)!!
                     Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
                     Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
                     Log.d("onDataChangeMedia", "Status: ${status.value}")
@@ -128,7 +130,11 @@ fun MediaControls(db: FirebaseDatabase) {
             IconButton(
                 onClick = {
                     val newStatus = if (status.value == "play") "pause" else "play"
-                    statusRef.setValue(newStatus)
+                    val data = mapOf(
+                        "id" to UUID.randomUUID().toString(),
+                        "type" to newStatus,
+                        "track" to currentTrack.value)
+                    statusRef.setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -140,7 +146,11 @@ fun MediaControls(db: FirebaseDatabase) {
             }
             IconButton(
                 onClick = {
-                    statusRef.setValue("stop")
+                    val data = mapOf(
+                        "id" to UUID.randomUUID().toString(),
+                        "type" to "stop",
+                        "track" to currentTrack.value)
+                    statusRef.setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
