@@ -109,10 +109,9 @@ fun MediaControls(db: FirebaseDatabase) {
             IconButton(
                 onClick = {
                     val currentIndex = songList.indexOf(currentTrack.value)
-                    if (currentIndex > 0) {
-                        currentTrack.value = songList[currentIndex - 1]
-                        simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
-                    }
+                    val previousIndex = if (currentIndex == 0) songList.size - 1 else currentIndex - 1
+                    currentTrack.value = songList[previousIndex]
+                    simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -142,10 +141,9 @@ fun MediaControls(db: FirebaseDatabase) {
             IconButton(
                 onClick = {
                     val currentIndex = songList.indexOf(currentTrack.value)
-                    if (currentIndex < songList.size - 1) {
-                        currentTrack.value = songList[currentIndex + 1]
-                        simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
-                    }
+                    val nextIndex = (currentIndex + 1) % songList.size
+                    currentTrack.value = songList[nextIndex]
+                    simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
