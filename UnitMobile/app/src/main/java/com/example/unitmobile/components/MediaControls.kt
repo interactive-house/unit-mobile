@@ -2,9 +2,6 @@ package com.example.unitmobile.components
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
@@ -32,11 +29,9 @@ fun MediaControls(db: FirebaseDatabase) {
     val deviceStatus = rememberSaveable { mutableStateOf("No device") }
     val status = rememberSaveable { mutableStateOf("No status") }
 
-    val idRef = db.getReference("simulatedDevices").child("action").child("id")
     val statusRef = db.getReference("simulatedDevices").child("action")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
-
-    val songList = remember { mutableStateListOf<String>() }
+    val songList = remember { mutableStateListOf<Map<*, *>>() }
 
     val songListRef = db.getReference("simulatedDevices").child("songList")
 
@@ -46,7 +41,10 @@ fun MediaControls(db: FirebaseDatabase) {
                 try {
                     songList.clear()
                     snapshot.children.forEach {
-                        songList.add(it.value.toString())
+                        val songMap = it.value as Map<*, *>?
+                        if (songMap != null) {
+                            songList.add(songMap)
+                        }
                     }
                     Log.d("onDataChangeMedia", "Song list: ${songList.toList()}")
                 } catch (e: Exception) {
@@ -69,9 +67,9 @@ fun MediaControls(db: FirebaseDatabase) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
-                    currentTrack.value = snapshot.child("action").child("track").getValue(String::class.java)!!
                     deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
                     status.value = snapshot.child("action").child("type").getValue(String::class.java)!!
+                    currentTrack.value = snapshot.child("action").child("track").getValue(String::class.java)!!
                     Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
                     Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
                     Log.d("onDataChangeMedia", "Status: ${status.value}")
@@ -118,10 +116,10 @@ fun MediaControls(db: FirebaseDatabase) {
         ) {
             IconButton(
                 onClick = {
-                    val currentIndex = songList.indexOf(currentTrack.value)
-                    val previousIndex = if (currentIndex == 0) songList.size - 1 else currentIndex - 1
-                    currentTrack.value = songList[previousIndex]
-                    simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
+                    val data = mapOf(
+                        "id" to UUID.randomUUID().toString(),
+                        "type" to "prev")
+                    simulatedDevicesRef.child("action").setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -132,8 +130,7 @@ fun MediaControls(db: FirebaseDatabase) {
                     val newStatus = if (status.value == "play") "pause" else "play"
                     val data = mapOf(
                         "id" to UUID.randomUUID().toString(),
-                        "type" to newStatus,
-                        "track" to currentTrack.value)
+                        "type" to newStatus)
                     statusRef.setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
@@ -148,8 +145,7 @@ fun MediaControls(db: FirebaseDatabase) {
                 onClick = {
                     val data = mapOf(
                         "id" to UUID.randomUUID().toString(),
-                        "type" to "stop",
-                        "track" to currentTrack.value)
+                        "type" to "stop")
                     statusRef.setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
@@ -158,10 +154,10 @@ fun MediaControls(db: FirebaseDatabase) {
             }
             IconButton(
                 onClick = {
-                    val currentIndex = songList.indexOf(currentTrack.value)
-                    val nextIndex = (currentIndex + 1) % songList.size
-                    currentTrack.value = songList[nextIndex]
-                    simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
+                    val data = mapOf(
+                        "id" to UUID.randomUUID().toString(),
+                        "type" to "next")
+                    simulatedDevicesRef.child("action").setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -170,8 +166,7 @@ fun MediaControls(db: FirebaseDatabase) {
         }
         Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         songList.forEach {
-            Text(text = it)
+            Text(text = "${it["song"].toString()}: ${it["artist"].toString()}")
         }
-
     }
 }
