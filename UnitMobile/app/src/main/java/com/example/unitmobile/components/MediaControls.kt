@@ -67,14 +67,16 @@ fun MediaControls(db: FirebaseDatabase) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
-                    currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
-                    deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
                     status.value = snapshot.child("status").getValue(String::class.java)!!
-                    Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
-                    Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
+                    deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
+                    currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
+
                     Log.d("onDataChangeMedia", "Status: ${status.value}")
+                    Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
+                    Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
+
                 } catch (e: Exception) {
-                    Log.d("onDataChangeMedia", "Error: ${e.message}")
+                    Log.d("onDataChangeMedia", "ErrorSimulatedDevices: ${e.message}")
                 }
             }
 
