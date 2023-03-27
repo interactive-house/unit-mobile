@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,6 +20,10 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import androidx.compose.material.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+
 
 @Composable
 fun MediaControls(db: FirebaseDatabase) {
@@ -28,6 +33,31 @@ fun MediaControls(db: FirebaseDatabase) {
 
     val statusRef = db.getReference("simulatedDevices").child("status")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
+
+    val songList = remember { mutableStateListOf<String>() }
+
+    val songListRef = db.getReference("simulatedDevices").child("songList")
+
+    DisposableEffect(songListRef) {
+        val valueEventListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                songList.clear()
+                snapshot.children.forEach {
+                    songList.add(it.value.toString())
+                }
+                Log.d("onDataChangeMedia", "Song list: ${songList.toList()}")
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+            }
+        }
+        songListRef.addValueEventListener(valueEventListener)
+        onDispose {
+            songListRef.removeEventListener(valueEventListener)
+        }
+
+    }
 
     DisposableEffect(simulatedDevicesRef) {
         val listener = object : ValueEventListener {
@@ -76,66 +106,56 @@ fun MediaControls(db: FirebaseDatabase) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(vertical = 8.dp)
         ) {
-            Button(
+            IconButton(
                 onClick = {
-                    statusRef.setValue("play")
+                    val currentIndex = songList.indexOf(currentTrack.value)
+                    if (currentIndex > 0) {
+                        currentTrack.value = songList[currentIndex - 1]
+                        simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
+                    }
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
-                Text(text = "Play")
+                Icon(Icons.Default.SkipPrevious, contentDescription = "Previous Track")
             }
-            Button(
+            IconButton(
                 onClick = {
-                    statusRef.setValue("pause")
+                    val newStatus = if (status.value == "play") "pause" else "play"
+                    statusRef.setValue(newStatus)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
-                Text(text = "Pause")
+                if (status.value == "play") {
+                    Icon(Icons.Default.Pause, contentDescription = "Pause")
+                } else {
+                    Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                }
             }
-            Button(
+            IconButton(
                 onClick = {
                     statusRef.setValue("stop")
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
-                Text(text = "Stop")
+                Icon(Icons.Default.Stop, contentDescription = "Stop")
             }
-
-        }
-        SongList(db = db)
-
-    }
-}
-
-@Composable
-fun SongList(db: FirebaseDatabase) {
-    val songList = remember { mutableStateListOf<String>() }
-
-    val songListRef = db.getReference("simulatedDevices").child("songList")
-
-    DisposableEffect(songListRef) {
-        val valueEventListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                songList.clear()
-                snapshot.children.forEach {
-                    songList.add(it.value.toString())
-                }
-                Log.d("onDataChangeMedia", "Song list: ${songList.toList()}")
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.w("onCancelledMedia", "Failed to read value.", error.toException())
+            IconButton(
+                onClick = {
+                    val currentIndex = songList.indexOf(currentTrack.value)
+                    if (currentIndex < songList.size - 1) {
+                        currentTrack.value = songList[currentIndex + 1]
+                        simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
+                    }
+                },
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
             }
         }
-        songListRef.addValueEventListener(valueEventListener)
-        onDispose {
-            songListRef.removeEventListener(valueEventListener)
+        Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        songList.forEach {
+            Text(text = it)
         }
 
-    }
-
-    Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-    songList.forEach {
-        Text(text = it)
     }
 }
