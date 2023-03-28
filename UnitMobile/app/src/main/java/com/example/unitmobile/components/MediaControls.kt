@@ -116,10 +116,12 @@ fun MediaControls(db: FirebaseDatabase) {
         ) {
             IconButton(
                 onClick = {
+                    /*
                     val data = mapOf(
                         "id" to UUID.randomUUID().toString(),
                         "type" to "prev")
                     simulatedDevicesRef.child("action").setValue(data)
+                     */
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -154,10 +156,12 @@ fun MediaControls(db: FirebaseDatabase) {
             }
             IconButton(
                 onClick = {
+                    /*
                     val data = mapOf(
                         "id" to UUID.randomUUID().toString(),
                         "type" to "next")
                     simulatedDevicesRef.child("action").setValue(data)
+                     */
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
