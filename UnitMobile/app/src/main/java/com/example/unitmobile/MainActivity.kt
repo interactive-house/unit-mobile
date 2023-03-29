@@ -75,7 +75,7 @@ fun MyApp(db: FirebaseDatabase) {
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(it),
-                horizontalAlignment = Alignment.CenterHorizontally,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (shouldShowLogin) {
                     LoginScreen( onLoginClicked = { shouldShowLogin = false })
@@ -94,7 +94,12 @@ fun NavigationGraph(navController: NavHostController, db: FirebaseDatabase, item
             HomeScreen(db = db, itemStateTrue = itemStateTrue, itemStateFalse = itemStateFalse)
         }
         composable(BottomNavItem.Media.screen_route) {
-            MediaScreen(db = db)
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                MediaScreen(db = db)
+            }
         }
     }
 }
