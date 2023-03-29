@@ -1,12 +1,15 @@
-package com.example.unitmobile.components
+package com.example.unitmobile.screens
 
 import android.util.Log
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Button
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -20,21 +23,19 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import androidx.compose.material.Icon
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-
+import java.util.*
 
 @Composable
-fun MediaControls(db: FirebaseDatabase) {
-    val currentTrack = rememberSaveable { mutableStateOf("No track") }
+fun MediaScreen(db: FirebaseDatabase) {
+    val currentTrackId = rememberSaveable { mutableStateOf("") }
     val deviceStatus = rememberSaveable { mutableStateOf("No device") }
     val status = rememberSaveable { mutableStateOf("No status") }
+    val currentTrack = rememberSaveable { mutableStateOf("") }
 
-    val statusRef = db.getReference("simulatedDevices").child("status")
+    val statusRef = db.getReference("simulatedDevices").child("action")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
 
-    val songList = remember { mutableStateListOf<String>() }
+    val songList = remember { mutableStateListOf<Map<*, *>>() }
 
     val songListRef = db.getReference("simulatedDevices").child("songList")
 
@@ -44,8 +45,14 @@ fun MediaControls(db: FirebaseDatabase) {
                 try {
                     songList.clear()
                     snapshot.children.forEach {
-                        songList.add(it.value.toString())
+                        val songMap = it.value as Map<*, *>?
+                        if (songMap != null) {
+                            songList.add(songMap)
+                        }
                     }
+                    currentTrackId.value = songList[0]["trackId"].toString()
+                    currentTrack.value = "${songList[0]["song"].toString()}: ${songList[0]["artist"].toString()}"
+
                     Log.d("onDataChangeMedia", "Song list: ${songList.toList()}")
                 } catch (e: Exception) {
                     Log.d("onDataChangeMedia", "Error: ${e.message}")
@@ -67,13 +74,11 @@ fun MediaControls(db: FirebaseDatabase) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
-                    status.value = snapshot.child("status").getValue(String::class.java)!!
+                    status.value = snapshot.child("action").child("type").getValue(String::class.java)!!
                     deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
-                    currentTrack.value = snapshot.child("currentTrack").getValue(String::class.java)!!
 
                     Log.d("onDataChangeMedia", "Status: ${status.value}")
                     Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
-                    Log.d("onDataChangeMedia", "Current track: ${currentTrack.value}")
 
                 } catch (e: Exception) {
                     Log.d("onDataChangeMedia", "ErrorSimulatedDevices: ${e.message}")
@@ -100,15 +105,29 @@ fun MediaControls(db: FirebaseDatabase) {
 
         )
         Text(
-            text = "Current track: ${currentTrack.value}",
+            text = "Current track:",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(text = currentTrack.value,
             fontSize = 18.sp
         )
         Text(
-            text = "Device status: ${deviceStatus.value}",
+            text = "Device status:",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = deviceStatus.value,
             fontSize = 18.sp
         )
         Text(
-            text = "Status: ${status.value}",
+            text = "Status:",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = status.value,
             fontSize = 18.sp
         )
         Row(
@@ -118,10 +137,15 @@ fun MediaControls(db: FirebaseDatabase) {
         ) {
             IconButton(
                 onClick = {
-                    val currentIndex = songList.indexOf(currentTrack.value)
+                    val currentIndex = songList.indexOf(songList.find { it["trackId"] == currentTrackId.value})
                     val previousIndex = if (currentIndex == 0) songList.size - 1 else currentIndex - 1
-                    currentTrack.value = songList[previousIndex]
-                    simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
+                    currentTrackId.value = songList[previousIndex]["trackId"].toString()
+                    currentTrack.value = "${songList[previousIndex]["song"].toString()}: ${songList[previousIndex]["artist"].toString()}"
+                    val data = mapOf(
+                        "id" to UUID.randomUUID().toString(),
+                        "type" to "play",
+                        "trackId" to currentTrackId.value)
+                    simulatedDevicesRef.child("action").setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -130,7 +154,10 @@ fun MediaControls(db: FirebaseDatabase) {
             IconButton(
                 onClick = {
                     val newStatus = if (status.value == "play") "pause" else "play"
-                    statusRef.setValue(newStatus)
+                    val data = mapOf(
+                        "id" to UUID.randomUUID().toString(),
+                        "type" to newStatus)
+                    statusRef.setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -142,7 +169,10 @@ fun MediaControls(db: FirebaseDatabase) {
             }
             IconButton(
                 onClick = {
-                    statusRef.setValue("stop")
+                    val data = mapOf(
+                        "id" to UUID.randomUUID().toString(),
+                        "type" to "stop")
+                    statusRef.setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -150,20 +180,25 @@ fun MediaControls(db: FirebaseDatabase) {
             }
             IconButton(
                 onClick = {
-                    val currentIndex = songList.indexOf(currentTrack.value)
+                    val currentIndex = songList.indexOf(songList.find { it["trackId"] == currentTrackId.value})
                     val nextIndex = (currentIndex + 1) % songList.size
-                    currentTrack.value = songList[nextIndex]
-                    simulatedDevicesRef.child("currentTrack").setValue(currentTrack.value)
+                    currentTrackId.value = songList[nextIndex]["trackId"].toString()
+                    currentTrack.value = "${songList[nextIndex]["song"].toString()}: ${songList[nextIndex]["artist"].toString()}"
+                    val data = mapOf(
+                        "id" to UUID.randomUUID().toString(),
+                        "type" to "play",
+                        "trackId" to currentTrackId.value)
+                    simulatedDevicesRef.child("action").setValue(data)
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
                 Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
             }
         }
-        /*Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         songList.forEach {
-            Text(text = it)
-        }*/
+            Text(text = "${it["song"].toString()}: ${it["artist"].toString()}")
+        }
 
     }
 }

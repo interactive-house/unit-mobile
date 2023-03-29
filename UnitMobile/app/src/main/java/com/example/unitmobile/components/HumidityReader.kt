@@ -36,7 +36,7 @@ fun HumidityReader(
                 Log.d("onDataChangeHumidity", "First run: ${firstRun.value}")
                 if (!firstRun.value) {
                     Log.d("onDataChangeHumidity", "Not first run")
-                    sendNotification(context, humidity.value)
+                    //sendNotification(context, humidity.value)
                 } else {
                     Log.d("onDataChangeHumidity", "First run")
                     firstRun.value = false
