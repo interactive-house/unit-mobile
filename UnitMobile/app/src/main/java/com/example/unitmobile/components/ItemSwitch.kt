@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.Switch
 import androidx.compose.material.Text
@@ -61,36 +62,41 @@ fun ItemSwitch(
         }
     }
 
+    Card(
+        modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp),
+        elevation = 4.dp
+    ){
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(vertical = 8.dp)
+        ) {
+            Icon(
+                Icons.Filled.Circle,
+                contentDescription = label,
+                tint = tint,
+                modifier = Modifier.size(24.dp)
+            )
 
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(vertical = 8.dp)
-    ) {
-        Icon(
-            Icons.Filled.Circle,
-            contentDescription = label,
-            tint = tint,
-            modifier = Modifier.size(24.dp)
-        )
+            Text(
+                text = itemState,
+                fontSize = 18.sp,
+                modifier = Modifier.weight(1f)
+            )
+            Switch(
+                checked = isChecked,
+                onCheckedChange = { isChecked ->
+                    reference.setValue(if (isChecked) itemStateTrue else itemStateFalse)
+                },
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
 
-        Text(
-            text = itemState,
-            fontSize = 18.sp,
-            modifier = Modifier.weight(1f)
-        )
-        Switch(
-            checked = isChecked,
-            onCheckedChange = { isChecked ->
-                reference.setValue(if (isChecked) itemStateTrue else itemStateFalse)
-            },
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-
-        Image(
-            painterResource(imageRes),
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            contentScale = ContentScale.FillBounds
-        )
+            Image(
+                painterResource(imageRes),
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                contentScale = ContentScale.FillBounds
+            )
+        }
     }
+
 }
