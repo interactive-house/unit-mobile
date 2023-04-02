@@ -94,7 +94,7 @@ fun MyApp(
             val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
             Log.d("MainActivity", "onActivityResult: $results")
             if (results != null) {
-                HandleSpeechToText(results, db)
+                handleSpeechToText(results, db)
             }
 
         }
@@ -213,7 +213,7 @@ fun BottomNavigation(navController: NavController) {
     }
 }
 
-fun HandleSpeechToText(text: String, db : FirebaseDatabase) {
+fun handleSpeechToText(text: String, db : FirebaseDatabase) {
     Log.d("MainActivity", "HandleSpeechToText: $text")
     val lampValues = listOf(
         "light",
@@ -230,7 +230,7 @@ fun HandleSpeechToText(text: String, db : FirebaseDatabase) {
         .getReference("SmartHomeValueDoor")
         .child("StatusOfDoor")
 
-    val lowercaseText = text.toLowerCase()
+    val lowercaseText = text.lowercase()
 
     if (lampValues.any { lowercaseText.contains(it) }) {
         if (lowercaseText.contains("on")) {
