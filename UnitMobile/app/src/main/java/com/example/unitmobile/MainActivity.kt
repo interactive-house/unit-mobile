@@ -1,19 +1,33 @@
 package com.example.unitmobile
 
+import android.app.Activity
+import android.content.ClipData
+import android.content.Intent
 import android.os.Bundle
+import android.speech.RecognizerIntent
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Mic
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat.startActivityForResult
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -25,7 +39,10 @@ import com.example.unitmobile.screens.HomeScreen
 import com.example.unitmobile.screens.LoginScreen
 import com.example.unitmobile.screens.MediaScreen
 import com.example.unitmobile.ui.theme.UnitMobileTheme
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 
@@ -48,7 +65,10 @@ class MainActivity : ComponentActivity() {
     }
 }
 @Composable
-fun MyApp(db: FirebaseDatabase) {
+fun MyApp(
+    db: FirebaseDatabase
+) {
+    val context = LocalContext.current
     // Change to false to skip login
     var shouldShowLogin by rememberSaveable {
         mutableStateOf(false)
@@ -63,28 +83,79 @@ fun MyApp(db: FirebaseDatabase) {
         "off",
         "closed"
     )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Smart House App") }
-            )
-        },
-        bottomBar = { BottomNavigation(navController = navController) },
-        content = {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(it),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                if (shouldShowLogin) {
-                    LoginScreen( onLoginClicked = { shouldShowLogin = false })
-                } else {
-                    NavigationGraph(navController = navController, db = db, itemStateTrue = itemStateTrue, itemStateFalse = itemStateFalse)
+    var text by remember { mutableStateOf("") }
+    val activityResultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        Log.d("MyApp", "activityResultLauncher triggered")
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            // first element of results
+            val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
+            Log.d("MainActivity", "onActivityResult: $results")
+            if (results != null) {
+                HandleSpeechToText(results, db)
+            }
+
+        }
+    }
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("Smart House App") }
+                )
+            },
+            bottomBar = { BottomNavigation(navController = navController) },
+            content = {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 56.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(it),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (shouldShowLogin) {
+                            LoginScreen(onLoginClicked = { shouldShowLogin = false })
+                        } else {
+                            NavigationGraph(
+                                navController = navController,
+                                db = db,
+                                itemStateTrue = itemStateTrue,
+                                itemStateFalse = itemStateFalse
+                            )
+                        }
+                    }
                 }
             }
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 16.dp)
+        ) {
+            FloatingActionButton(
+                onClick = {
+                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                        putExtra(
+                            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                        )
+                    }
+                    activityResultLauncher.launch(intent)
+                },
+                backgroundColor = MaterialTheme.colors.primary,
+                contentColor = MaterialTheme.colors.onPrimary
+            ) {
+                Icon(Icons.Filled.Mic, contentDescription = "Add")
+            }
         }
-    )
+    }
 }
 
 @Composable
@@ -141,6 +212,49 @@ fun BottomNavigation(navController: NavController) {
         }
     }
 }
+
+fun HandleSpeechToText(text: String, db : FirebaseDatabase) {
+    Log.d("MainActivity", "HandleSpeechToText: $text")
+    val lampValues = listOf(
+        "light",
+        "lamp"
+    )
+
+    val lampRef = db
+        .getReference("SmartHomeValueLight")
+        .child("StatusOflight")
+    val windowRef = db
+        .getReference("SmartHomeValueWindow")
+        .child("StatusOfWindow")
+    val doorRef = db
+        .getReference("SmartHomeValueDoor")
+        .child("StatusOfDoor")
+
+    val lowercaseText = text.toLowerCase()
+
+    if (lampValues.any { lowercaseText.contains(it) }) {
+        if (lowercaseText.contains("on")) {
+            lampRef.setValue("on")
+        } else if (lowercaseText.contains("off")) {
+            lampRef.setValue("off")
+        }
+    } else if (lowercaseText.contains("window")) {
+        if (lowercaseText.contains("open")) {
+            windowRef.setValue("open")
+        } else if (lowercaseText.contains("close")) {
+            windowRef.setValue("close")
+        }
+    } else if (lowercaseText.contains("door")) {
+        if (lowercaseText.contains("open")) {
+            doorRef.setValue("open")
+        } else if (lowercaseText.contains("close")) {
+            doorRef.setValue("close")
+        }
+    }
+}
+
+
+
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
