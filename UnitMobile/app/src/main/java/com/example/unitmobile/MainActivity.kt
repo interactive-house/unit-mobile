@@ -58,7 +58,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    MyApp(db)
+                    MyApp(db, this)
                 }
             }
         }
@@ -66,12 +66,12 @@ class MainActivity : ComponentActivity() {
 }
 @Composable
 fun MyApp(
-    db: FirebaseDatabase
+    db: FirebaseDatabase,
+    activity: Activity
 ) {
-    val context = LocalContext.current
     // Change to false to skip login
     var shouldShowLogin by rememberSaveable {
-        mutableStateOf(false)
+        mutableStateOf(true)
     }
     val navController = rememberNavController()
 
@@ -94,7 +94,7 @@ fun MyApp(
             val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
             Log.d("MainActivity", "onActivityResult: $results")
             if (results != null) {
-                handleSpeechToText(results, db)
+                handleSpeechToText(results, db, activity)
             }
 
         }
@@ -106,7 +106,11 @@ fun MyApp(
                     title = { Text("Smart House App") }
                 )
             },
-            bottomBar = { BottomNavigation(navController = navController) },
+            bottomBar = {
+                if (!shouldShowLogin){
+                    BottomNavigation(navController = navController) }
+                },
+
             content = {
                 Box(
                     modifier = Modifier
@@ -139,20 +143,22 @@ fun MyApp(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         ) {
-            FloatingActionButton(
-                onClick = {
-                    val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                        putExtra(
-                            RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                            RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
-                        )
-                    }
-                    activityResultLauncher.launch(intent)
-                },
-                backgroundColor = MaterialTheme.colors.primary,
-                contentColor = MaterialTheme.colors.onPrimary
-            ) {
-                Icon(Icons.Filled.Mic, contentDescription = "Add")
+            if (!shouldShowLogin){
+                FloatingActionButton(
+                    onClick = {
+                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(
+                                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                            )
+                        }
+                        activityResultLauncher.launch(intent)
+                    },
+                    backgroundColor = MaterialTheme.colors.primary,
+                    contentColor = MaterialTheme.colors.onPrimary
+                ) {
+                    Icon(Icons.Filled.Mic, contentDescription = "Add")
+                }
             }
         }
     }
@@ -213,7 +219,7 @@ fun BottomNavigation(navController: NavController) {
     }
 }
 
-fun handleSpeechToText(text: String, db : FirebaseDatabase) {
+fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity) {
     Log.d("MainActivity", "HandleSpeechToText: $text")
     val lampValues = listOf(
         "light",
@@ -234,32 +240,34 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase) {
 
     if (lampValues.any { lowercaseText.contains(it) }) {
         if (lowercaseText.contains("on")) {
+            sendToast("Lamp turned on", activity)
             lampRef.setValue("on")
         } else if (lowercaseText.contains("off")) {
+            sendToast("Lamp turned off", activity)
             lampRef.setValue("off")
         }
     } else if (lowercaseText.contains("window")) {
         if (lowercaseText.contains("open")) {
+            sendToast("Window opened", activity)
             windowRef.setValue("open")
         } else if (lowercaseText.contains("close")) {
+            sendToast("Window closed", activity)
             windowRef.setValue("close")
         }
     } else if (lowercaseText.contains("door")) {
         if (lowercaseText.contains("open")) {
+            sendToast("Door opened", activity)
             doorRef.setValue("open")
         } else if (lowercaseText.contains("close")) {
+            sendToast("Door closed", activity)
             doorRef.setValue("close")
         }
     }
 }
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    val db = Firebase.database("https://smarthome-3bb7b-default-rtdb.firebaseio.com/")
-    UnitMobileTheme {
-        MyApp(db)
-    }
+fun sendToast(text: String, activity: Activity) {
+    Toast.makeText(
+        activity,
+        text,
+        Toast.LENGTH_SHORT
+    ).show()
 }

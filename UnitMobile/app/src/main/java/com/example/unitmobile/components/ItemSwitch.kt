@@ -5,10 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.Switch
-import androidx.compose.material.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.runtime.Composable
@@ -20,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.database.DataSnapshot
@@ -63,12 +62,13 @@ fun ItemSwitch(
     }
 
     Card(
-        modifier = Modifier.padding(horizontal = 0.dp, vertical = 0.dp),
-        elevation = 4.dp
-    ){
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        elevation = 4.dp,
+        shape = RoundedCornerShape(8.dp)
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 8.dp)
+            modifier = Modifier.padding(vertical = 8.dp, horizontal = 16.dp),
         ) {
             Icon(
                 Icons.Filled.Circle,
@@ -80,6 +80,7 @@ fun ItemSwitch(
             Text(
                 text = itemState,
                 fontSize = 18.sp,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
             Switch(
