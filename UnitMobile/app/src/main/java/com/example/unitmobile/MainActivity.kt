@@ -1,6 +1,7 @@
 package com.example.unitmobile
 
 import android.app.Activity
+import android.app.Application
 import android.content.ClipData
 import android.content.Intent
 import android.os.Bundle
@@ -22,12 +23,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat.startActivityForResult
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -71,9 +77,15 @@ fun MyApp(
 ) {
     // Change to false to skip login
     var shouldShowLogin by rememberSaveable {
-        mutableStateOf(true)
+        mutableStateOf(false)
     }
+
     val navController = rememberNavController()
+    val viewModel: SharedViewModel = ViewModelProvider(
+        LocalContext.current as ComponentActivity
+    )[SharedViewModel::class.java]
+    val lifeCycleOwner = LocalLifecycleOwner.current
+
 
     val itemStateTrue = listOf(
         "on",
@@ -94,8 +106,9 @@ fun MyApp(
             val results = data?.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS)?.get(0)
             Log.d("MainActivity", "onActivityResult: $results")
             if (results != null) {
-                handleSpeechToText(results, db, activity)
-            }
+
+                handleSpeechToText(results, db, activity, viewModel, lifeCycleOwner)}
+
 
         }
     }
@@ -219,8 +232,21 @@ fun BottomNavigation(navController: NavController) {
     }
 }
 
-fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity) {
+fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, viewModel: SharedViewModel, lifecycleOwner: LifecycleOwner) {
     Log.d("MainActivity", "HandleSpeechToText: $text")
+
+    var songList = mutableListOf<Song>()
+
+    viewModel.songs.observe(lifecycleOwner) {
+        songList = it as MutableList<Song>
+    }
+
+
+
+
+
+    viewModel.initSongs()
+
     val lampValues = listOf(
         "light",
         "lamp"
@@ -235,6 +261,8 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity) 
     val doorRef = db
         .getReference("SmartHomeValueDoor")
         .child("StatusOfDoor")
+
+
 
     val lowercaseText = text.lowercase()
 
@@ -262,7 +290,20 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity) 
             sendToast("Door closed", activity)
             doorRef.setValue("close")
         }
+    }else if (lowercaseText.contains("play")){
+        for (i in songList)
+        {
+            if(lowercaseText.contains(i.song)){
+
+            }
+        }
+
+
+
+
     }
+
+
 }
 fun sendToast(text: String, activity: Activity) {
     Toast.makeText(
