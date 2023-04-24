@@ -252,36 +252,11 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, 
         .child("StatusOfDoor")
 
 
+    val currentScreen = navController.currentDestination?.route
 
     val lowercaseText = text.lowercase()
-
-    if (lampValues.any { lowercaseText.contains(it) }) {
-        if (lowercaseText.contains("on")) {
-            sendToast("Lamp turned on", activity)
-            lampRef.setValue("on")
-        } else if (lowercaseText.contains("off")) {
-            sendToast("Lamp turned off", activity)
-            lampRef.setValue("off")
-        }
-    } else if (lowercaseText.contains("window")) {
-        if (lowercaseText.contains("open")) {
-            sendToast("Window opened", activity)
-            windowRef.setValue("open")
-        } else if (lowercaseText.contains("close")) {
-            sendToast("Window closed", activity)
-            windowRef.setValue("close")
-        }
-    } else if (lowercaseText.contains("door")) {
-        if (lowercaseText.contains("open")) {
-            sendToast("Door opened", activity)
-            doorRef.setValue("open")
-        } else if (lowercaseText.contains("close")) {
-            sendToast("Door closed", activity)
-            doorRef.setValue("close")
-        }
-    }else if (lowercaseText.contains("play") || lowercaseText.contains("pause") ||
+    if (lowercaseText.contains("play") || lowercaseText.contains("pause") ||
         lowercaseText.contains("stop") || lowercaseText.contains("next") || lowercaseText.contains("previous")){
-        val currentScreen = navController.currentDestination?.route
         viewModel.ttsPhrase.postValue(lowercaseText)
 
         if(currentScreen != BottomNavItem.Media.screen_route){
@@ -298,13 +273,47 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, 
             }
         }
 
+    }
+    else if(lampValues.any { lowercaseText.contains(it) } || lowercaseText.contains("window") || lowercaseText.contains("door")) {
 
+        if(currentScreen != BottomNavItem.Home.screen_route){
+            navController.navigate(BottomNavItem.Home.screen_route) {
 
+                navController.graph.startDestinationRoute?.let { screen_route ->
+                    popUpTo(screen_route) {
+                        saveState = true
+                    }
+                }
+                launchSingleTop = true
+                restoreState = true
 
-
-
-
-
+            }
+        }
+        if (lampValues.any { lowercaseText.contains(it) }) {
+            if (lowercaseText.contains("on")) {
+                sendToast("Lamp turned on", activity)
+                lampRef.setValue("on")
+            } else if (lowercaseText.contains("off")) {
+                sendToast("Lamp turned off", activity)
+                lampRef.setValue("off")
+            }
+        } else if (lowercaseText.contains("window")) {
+            if (lowercaseText.contains("open")) {
+                sendToast("Window opened", activity)
+                windowRef.setValue("open")
+            } else if (lowercaseText.contains("close")) {
+                sendToast("Window closed", activity)
+                windowRef.setValue("close")
+            }
+        } else if (lowercaseText.contains("door")) {
+            if (lowercaseText.contains("open")) {
+                sendToast("Door opened", activity)
+                doorRef.setValue("open")
+            } else if (lowercaseText.contains("close")) {
+                sendToast("Door closed", activity)
+                doorRef.setValue("close")
+            }
+        }
     }
 
 
