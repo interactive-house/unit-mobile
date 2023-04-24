@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
@@ -67,9 +68,21 @@ fun MediaControls(db: FirebaseDatabase) {
 
 
     }
+
+
+
     viewModel.initSongs()
 
     fun nextSong(){
+        val currentIndex = songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID})
+        val nextIndex = (currentIndex + 1) % songList.size
+        currentTrack.value = songList[nextIndex]
+
+        val data = mapOf(
+            "id" to UUID.randomUUID().toString(),
+            "type" to "play",
+            "trackId" to currentTrack.value.trackID)
+        simulatedDevicesRef.child("action").setValue(data)
 
     }
     fun previousSong(){
@@ -90,8 +103,39 @@ fun MediaControls(db: FirebaseDatabase) {
     }
 
     fun playSong(song: Song){
+        currentTrack.value = song
+        val data = mapOf(
+            "id" to UUID
+                .randomUUID()
+                .toString(),
+            "type" to "play",
+            "trackId" to currentTrack.value.trackID
+        )
+        simulatedDevicesRef
+            .child("action")
+            .setValue(data)
 
     }
+    viewModel.ttsPhrase.observe(LocalContext.current as androidx.activity.ComponentActivity) { phrase ->
+        Log.d("MediaControls", "TTS phrase: $phrase")
+        if(phrase.contains("next")){
+            nextSong()
+        }else if(phrase.contains("previous")){
+            previousSong()
+        }else if(phrase.contains("play")){
+
+            val song = songList.find { it.song.lowercase().contains(phrase.split("play")[1].trim()) }
+            if(song != null){
+                playSong(song)
+            }
+        }
+
+        if(phrase != ""){
+            viewModel.ttsPhrase.postValue("")
+
+        }
+    }
+
 
 
     DisposableEffect(simulatedDevicesRef) {
@@ -154,18 +198,7 @@ fun MediaControls(db: FirebaseDatabase) {
         ) {
             IconButton(
                 onClick = {
-                    val currentIndex = songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
-                    val previousIndex = if (currentIndex == 0) songList.size - 1 else currentIndex - 1
-
-                    currentTrack.value = songList[previousIndex]
-
-
-
-                    val data = mapOf(
-                        "id" to UUID.randomUUID().toString(),
-                        "type" to "play",
-                        "trackId" to currentTrack.value.trackID)
-                    simulatedDevicesRef.child("action").setValue(data)
+                  previousSong()
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -200,15 +233,7 @@ fun MediaControls(db: FirebaseDatabase) {
             }
             IconButton(
                 onClick = {
-                    val currentIndex = songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID})
-                    val nextIndex = (currentIndex + 1) % songList.size
-                    currentTrack.value = songList[nextIndex]
-
-                    val data = mapOf(
-                        "id" to UUID.randomUUID().toString(),
-                        "type" to "play",
-                        "trackId" to currentTrack.value.trackID)
-                    simulatedDevicesRef.child("action").setValue(data)
+                    nextSong()
                 },
                 modifier = Modifier.padding(horizontal = 8.dp)
             ) {
@@ -225,19 +250,7 @@ fun MediaControls(db: FirebaseDatabase) {
                         .clickable {
 
 
-                            currentTrack.value = songList[index]
-
-
-                            val data = mapOf(
-                                "id" to UUID
-                                    .randomUUID()
-                                    .toString(),
-                                "type" to "play",
-                                "trackId" to currentTrack.value.trackID
-                            )
-                            simulatedDevicesRef
-                                .child("action")
-                                .setValue(data)
+                            playSong(songList[index])
                         }) {
                        Column(
                            modifier = Modifier.padding(8.dp)

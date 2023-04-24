@@ -85,7 +85,7 @@ fun MyApp(
         LocalContext.current as ComponentActivity
     )[SharedViewModel::class.java]
     val lifeCycleOwner = LocalLifecycleOwner.current
-
+    viewModel.initSongs()
 
     val itemStateTrue = listOf(
         "on",
@@ -107,7 +107,7 @@ fun MyApp(
             Log.d("MainActivity", "onActivityResult: $results")
             if (results != null) {
 
-                handleSpeechToText(results, db, activity, viewModel, lifeCycleOwner)}
+                handleSpeechToText(results, db, activity, navController, viewModel)}
 
 
         }
@@ -232,20 +232,9 @@ fun BottomNavigation(navController: NavController) {
     }
 }
 
-fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, viewModel: SharedViewModel, lifecycleOwner: LifecycleOwner) {
+fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, navController: NavController, viewModel: SharedViewModel) {
     Log.d("MainActivity", "HandleSpeechToText: $text")
 
-    var songList = mutableListOf<Song>()
-
-    viewModel.songs.observe(lifecycleOwner) {
-        songList = it as MutableList<Song>
-    }
-
-
-
-
-
-    viewModel.initSongs()
 
     val lampValues = listOf(
         "light",
@@ -290,13 +279,28 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, 
             sendToast("Door closed", activity)
             doorRef.setValue("close")
         }
-    }else if (lowercaseText.contains("play")){
-        for (i in songList)
-        {
-            if(lowercaseText.contains(i.song)){
+    }else if (lowercaseText.contains("play") || lowercaseText.contains("pause") ||
+        lowercaseText.contains("stop") || lowercaseText.contains("next") || lowercaseText.contains("previous")){
+        val currentScreen = navController.currentDestination?.route
+        viewModel.ttsPhrase.postValue(lowercaseText)
+
+        if(currentScreen != BottomNavItem.Media.screen_route){
+            navController.navigate(BottomNavItem.Media.screen_route) {
+
+                navController.graph.startDestinationRoute?.let { screen_route ->
+                    popUpTo(screen_route) {
+                        saveState = true
+                    }
+                }
+                launchSingleTop = true
+                restoreState = true
 
             }
         }
+
+
+
+
 
 
 

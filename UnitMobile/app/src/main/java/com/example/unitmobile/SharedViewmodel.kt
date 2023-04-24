@@ -24,6 +24,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
     var currentTrack = MutableLiveData<MutableMap<String, String>>()
     var songs = MutableLiveData<List<Song>>()
+    var ttsPhrase = MutableLiveData<String>()
+
 
 
      fun initSongs() {
@@ -71,6 +73,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
         })
     }
+
 
 
 
