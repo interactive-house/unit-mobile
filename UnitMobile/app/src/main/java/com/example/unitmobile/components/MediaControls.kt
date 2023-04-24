@@ -2,6 +2,7 @@ package com.example.unitmobile.components
 
 import android.app.Application
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -44,7 +45,7 @@ fun MediaControls(db: FirebaseDatabase) {
     )[SharedViewModel::class.java]
     var songList: List<Song> = remember { mutableStateListOf<Song>() }
 
-
+    val context = LocalContext.current
     val deviceStatus = rememberSaveable { mutableStateOf("No device") }
     val status = rememberSaveable { mutableStateOf("No status") }
     val currentTrack = rememberSaveable(
@@ -98,7 +99,14 @@ fun MediaControls(db: FirebaseDatabase) {
         simulatedDevicesRef.child("action").setValue(data)
 
     }
-    fun handleAction(){
+    fun handleAction(action: String){
+
+            val data = mapOf(
+                "id" to UUID.randomUUID().toString(),
+                "type" to action,
+                "trackId" to currentTrack.value.trackID)
+            simulatedDevicesRef.child("action").setValue(data)
+
 
     }
 
@@ -122,12 +130,25 @@ fun MediaControls(db: FirebaseDatabase) {
             nextSong()
         }else if(phrase.contains("previous")){
             previousSong()
-        }else if(phrase.contains("play")){
+        }else if(phrase.contains("play") ){
+            if(phrase.length == 4){
+                handleAction("play")
 
-            val song = songList.find { it.song.lowercase().contains(phrase.split("play")[1].trim()) }
-            if(song != null){
-                playSong(song)
+            }else {
+                val song =
+                    songList.find { it.song.lowercase().contains(phrase.split("play")[1].trim()) }
+                if (song != null) {
+                    playSong(song)
+                } else {
+                    Toast.makeText(context, "Song not found", Toast.LENGTH_SHORT).show()
+                }
             }
+        }else if(phrase.contains("pause")  ){
+            handleAction("pause")
+
+
+        }else if( phrase.contains("stop")){
+            handleAction("stop")
         }
 
         if(phrase != ""){
