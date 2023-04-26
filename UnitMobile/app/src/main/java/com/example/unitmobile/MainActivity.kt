@@ -1,8 +1,6 @@
 package com.example.unitmobile
 
 import android.app.Activity
-import android.app.Application
-import android.content.ClipData
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognizerIntent
@@ -12,27 +10,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.LifecycleRegistry
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
@@ -44,11 +41,11 @@ import com.example.unitmobile.navigation.BottomNavItem
 import com.example.unitmobile.screens.HomeScreen
 import com.example.unitmobile.screens.LoginScreen
 import com.example.unitmobile.screens.MediaScreen
+import com.example.unitmobile.screens.RegisterScreen
 import com.example.unitmobile.ui.theme.UnitMobileTheme
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 
@@ -70,15 +67,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun MyApp(
     db: FirebaseDatabase,
     activity: Activity
 ) {
     // Change to false to skip login
-    var shouldShowLogin by rememberSaveable {
-        mutableStateOf(false)
+    val auth = remember { FirebaseAuth.getInstance() }
+    var userState by remember(auth) { mutableStateOf(auth.currentUser) }
+
+    var startDestination by remember { mutableStateOf("login") }
+
+    fun signOut() {
+        auth.signOut()
+        userState = null
+
     }
+
+    if(userState != null){
+        startDestination = "home"
+    }else{
+        startDestination = "login"
+    }
+
 
     val navController = rememberNavController()
     val viewModel: SharedViewModel = ViewModelProvider(
@@ -107,7 +119,8 @@ fun MyApp(
             Log.d("MainActivity", "onActivityResult: $results")
             if (results != null) {
 
-                handleSpeechToText(results, db, activity, navController, viewModel)}
+                handleSpeechToText(results, db, activity, navController, viewModel)
+            }
 
 
         }
@@ -116,13 +129,21 @@ fun MyApp(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("Smart House App") }
+                    title = { Text("Smart House App") },
+                    actions = {
+                        if (userState != null) {
+                            DropdownMenuDemo(signOut = { signOut() }, userState)
+
+                        }
+
+                    }
                 )
             },
             bottomBar = {
-                if (!shouldShowLogin){
-                    BottomNavigation(navController = navController) }
-                },
+                if (userState != null) {
+                    BottomNavigation(navController = navController)
+                }
+            },
 
             content = {
                 Box(
@@ -137,18 +158,49 @@ fun MyApp(
                             .padding(it),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        if (shouldShowLogin) {
-                            LoginScreen(onLoginClicked = { shouldShowLogin = false })
-                        } else {
-                            NavigationGraph(
-                                navController = navController,
-                                db = db,
-                                itemStateTrue = itemStateTrue,
-                                itemStateFalse = itemStateFalse
-                            )
-                        }
+
+
                     }
+                    NavigationGraph(
+                        navController = navController,
+                        db = db,
+                        itemStateTrue = itemStateTrue,
+                        itemStateFalse = itemStateFalse,
+                        startDestination = startDestination,
+                        showRegisterCallback = {
+                            navController.navigate("register") {
+
+                                navController.graph.startDestinationRoute?.let { screen_route ->
+                                    popUpTo(screen_route) {
+                                        saveState = true
+                                    }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+
+                            }
+                        },
+                        onLoginCallback = {
+                            userState = it as FirebaseUser?
+                            navController.navigate("home") {
+
+
+
+
+                            }
+                        },
+                        onRegisterCallback = {
+                            userState = it as FirebaseUser?
+                            navController.navigate("home") {
+
+                            }
+                        },
+
+
+                    )
+
                 }
+
             }
         )
         Box(
@@ -156,7 +208,7 @@ fun MyApp(
                 .align(Alignment.BottomCenter)
                 .padding(bottom = 16.dp)
         ) {
-            if (!shouldShowLogin){
+            if (userState != null) {
                 FloatingActionButton(
                     onClick = {
                         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -178,8 +230,17 @@ fun MyApp(
 }
 
 @Composable
-fun NavigationGraph(navController: NavHostController, db: FirebaseDatabase, itemStateTrue: List<String>, itemStateFalse: List<String>) {
-    NavHost(navController, startDestination = BottomNavItem.Home.screen_route) {
+fun NavigationGraph(
+    navController: NavHostController,
+    db: FirebaseDatabase,
+    itemStateTrue: List<String>,
+    itemStateFalse: List<String>,
+    startDestination: String,
+    showRegisterCallback: () -> Unit,
+    onLoginCallback: (Any?) -> Unit,
+    onRegisterCallback: (Any?) -> Unit
+) {
+    NavHost(navController, startDestination = startDestination) {
         composable(BottomNavItem.Home.screen_route) {
             HomeScreen(db = db, itemStateTrue = itemStateTrue, itemStateFalse = itemStateFalse)
         }
@@ -190,6 +251,28 @@ fun NavigationGraph(navController: NavHostController, db: FirebaseDatabase, item
             ) {
                 MediaScreen(db = db)
             }
+        }
+        composable("register") {
+            RegisterScreen(
+                onRegister = {
+                    onRegisterCallback(it)
+                },
+                Modifier,
+                context = LocalContext.current
+
+            )
+        }
+        composable("login") {
+            LoginScreen(
+                onLogIn = {
+                    onLoginCallback(it)
+
+                },
+                showRegisterCallback = { showRegisterCallback() },
+                modifier = Modifier,
+                context = LocalContext.current
+
+            )
         }
     }
 }
@@ -209,8 +292,12 @@ fun BottomNavigation(navController: NavController) {
         items.forEach { item ->
             BottomNavigationItem(
                 icon = { Icon(painterResource(id = item.icon), contentDescription = item.title) },
-                label = { Text(text = item.title,
-                    fontSize = 9.sp) },
+                label = {
+                    Text(
+                        text = item.title,
+                        fontSize = 9.sp
+                    )
+                },
                 selectedContentColor = Color.Black,
                 unselectedContentColor = Color.Black.copy(0.4f),
                 alwaysShowLabel = true,
@@ -232,7 +319,13 @@ fun BottomNavigation(navController: NavController) {
     }
 }
 
-fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, navController: NavController, viewModel: SharedViewModel) {
+fun handleSpeechToText(
+    text: String,
+    db: FirebaseDatabase,
+    activity: Activity,
+    navController: NavController,
+    viewModel: SharedViewModel
+) {
     Log.d("MainActivity", "HandleSpeechToText: $text")
 
 
@@ -256,10 +349,11 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, 
 
     val lowercaseText = text.lowercase()
     if (lowercaseText.contains("play") || lowercaseText.contains("pause") ||
-        lowercaseText.contains("stop") || lowercaseText.contains("next") || lowercaseText.contains("previous")){
+        lowercaseText.contains("stop") || lowercaseText.contains("next") || lowercaseText.contains("previous")
+    ) {
         viewModel.ttsPhrase.postValue(lowercaseText)
 
-        if(currentScreen != BottomNavItem.Media.screen_route){
+        if (currentScreen != BottomNavItem.Media.screen_route) {
             navController.navigate(BottomNavItem.Media.screen_route) {
 
                 navController.graph.startDestinationRoute?.let { screen_route ->
@@ -273,10 +367,11 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, 
             }
         }
 
-    }
-    else if(lampValues.any { lowercaseText.contains(it) } || lowercaseText.contains("window") || lowercaseText.contains("door")) {
+    } else if (lampValues.any { lowercaseText.contains(it) } || lowercaseText.contains("window") || lowercaseText.contains(
+            "door"
+        )) {
 
-        if(currentScreen != BottomNavItem.Home.screen_route){
+        if (currentScreen != BottomNavItem.Home.screen_route) {
             navController.navigate(BottomNavItem.Home.screen_route) {
 
                 navController.graph.startDestinationRoute?.let { screen_route ->
@@ -318,6 +413,71 @@ fun handleSpeechToText(text: String, db : FirebaseDatabase, activity: Activity, 
 
 
 }
+
+@Composable
+fun RoundIcon(image: ImageBitmap) {
+    Box(
+        modifier = Modifier
+            .size(56.dp)
+            .clip(CircleShape)
+            .background(Color.White)
+            .padding(4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            bitmap = image,
+            contentDescription = null,
+            modifier = Modifier.size(48.dp),
+            contentScale = ContentScale.Crop
+        )
+    }
+
+}
+
+
+@Composable
+fun DropdownMenuDemo(signOut: () -> Unit, userState: FirebaseUser?) {
+    var expanded by remember { mutableStateOf(false) }
+
+    val items = listOf(
+        Pair(Icons.Filled.VerifiedUser, "Currently Logged in as: ${userState?.email}"),
+        Pair(Icons.Filled.Logout, "Logout"),
+    )
+
+    Column {
+        Spacer(modifier = Modifier.height(16.dp))
+        IconButton(onClick = {
+            expanded = true
+
+        }) {
+            Icon(Icons.Filled.Person, contentDescription = "Add")
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            items.forEachIndexed { index, item ->
+                DropdownMenuItem(onClick = {
+                    if (index == 1) {
+                        signOut()
+
+
+                    }
+
+                }) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(item.first, contentDescription = null)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(item.second)
+                    }
+                }
+            }
+
+        }
+    }
+}
+
+
 fun sendToast(text: String, activity: Activity) {
     Toast.makeText(
         activity,
@@ -325,3 +485,4 @@ fun sendToast(text: String, activity: Activity) {
         Toast.LENGTH_SHORT
     ).show()
 }
+
