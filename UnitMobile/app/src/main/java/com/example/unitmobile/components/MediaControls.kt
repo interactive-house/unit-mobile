@@ -332,6 +332,7 @@ fun MediaControls(db: FirebaseDatabase) {
                     modifier = Modifier.padding(16.dp),
                 ) {
                     items(songList.size) { index ->
+                        Divider(startIndent = 0.dp, thickness = 1.dp, color = Color.Gray)
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -388,6 +389,7 @@ fun MediaControls(db: FirebaseDatabase) {
                             }
 
                         }
+
                     }
                 }
 
@@ -487,7 +489,6 @@ fun SpinningImage(spin: Boolean, currentTrack: Song) {
     }
     rotationState = rotationAnim.value
     albumImage = currentTrack.albumIMG
-    Log.i("SpinningImage ID", "SpinningImage : $albumImage")
 
    if(albumImage != 0) {
        Image(

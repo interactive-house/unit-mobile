@@ -415,27 +415,6 @@ fun handleSpeechToText(
 }
 
 @Composable
-fun RoundIcon(image: ImageBitmap) {
-    Box(
-        modifier = Modifier
-            .size(56.dp)
-            .clip(CircleShape)
-            .background(Color.White)
-            .padding(4.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Image(
-            bitmap = image,
-            contentDescription = null,
-            modifier = Modifier.size(48.dp),
-            contentScale = ContentScale.Crop
-        )
-    }
-
-}
-
-
-@Composable
 fun DropdownMenuDemo(signOut: () -> Unit, userState: FirebaseUser?) {
     var expanded by remember { mutableStateOf(false) }
 
