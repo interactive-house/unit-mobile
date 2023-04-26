@@ -1,6 +1,7 @@
 package com.example.unitmobile
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,10 +36,20 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
                 val songsList = mutableListOf<Song>()
                 snapshot.children.forEach { songSnapshot ->
+                    var albumDrawable = (songSnapshot.value as Map<*, *>)["song"].toString().trim().lowercase().replace(" ", "_")
+                    Log.i("SharedViewModel album", "AlbumDrawable: $albumDrawable")
+                    var resID = getApplication<Application>().resources.getIdentifier(
+                        albumDrawable, "drawable", getApplication<Application>().packageName
+
+                    )
+                    Log.i("SharedViewModel album res", "ResID: $resID")
                     val song = Song(
                         (songSnapshot.value as Map<*, *>)["song"].toString(),
                         (songSnapshot.value as Map<*, *>)["artist"].toString(),
-                        (songSnapshot.value as Map<*, *>)["trackId"].toString()
+                        (songSnapshot.value as Map<*, *>)["trackId"].toString(),
+                        resID
+
+
                     )
                     if (song != null) {
                         Log.i("SharedViewModel", "Song: $song")

@@ -1,34 +1,33 @@
 package com.example.unitmobile.components
 
-import android.app.Application
+import android.content.Context
+import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.airbnb.lottie.compose.*
 import com.example.unitmobile.R
 import com.example.unitmobile.SharedViewModel
@@ -54,7 +53,7 @@ fun MediaControls(db: FirebaseDatabase) {
     val status = rememberSaveable { mutableStateOf("No status") }
     val currentTrack = rememberSaveable(
         stateSaver = SongSaver()
-    ) { mutableStateOf(Song("", "", "")) }
+    ) { mutableStateOf(Song("", "", "", 0)) }
 
     val statusRef = db.getReference("simulatedDevices").child("action")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
@@ -69,7 +68,8 @@ fun MediaControls(db: FirebaseDatabase) {
     }
     viewModel.currentTrack.observe(LocalContext.current as androidx.activity.ComponentActivity) { track ->
         Log.d("MediaControls current track123", "Current track: $track")
-        songList.find { it.trackID ==  track["trackId"] }?.let {  currentTrack.value = it }
+        songList.find { it.trackID == track["trackId"] }?.let { currentTrack.value = it }
+
 
 
     }
@@ -78,20 +78,24 @@ fun MediaControls(db: FirebaseDatabase) {
 
     viewModel.initSongs()
 
-    fun nextSong(){
-        val currentIndex = songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID})
+    fun nextSong() {
+        val currentIndex =
+            songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         val nextIndex = (currentIndex + 1) % songList.size
         currentTrack.value = songList[nextIndex]
 
         val data = mapOf(
             "id" to UUID.randomUUID().toString(),
             "type" to "play",
-            "trackId" to currentTrack.value.trackID)
+            "trackId" to currentTrack.value.trackID
+        )
         simulatedDevicesRef.child("action").setValue(data)
 
     }
-    fun previousSong(){
-        val currentIndex = songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
+
+    fun previousSong() {
+        val currentIndex =
+            songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         val previousIndex = if (currentIndex == 0) songList.size - 1 else currentIndex - 1
 
         currentTrack.value = songList[previousIndex]
@@ -99,22 +103,25 @@ fun MediaControls(db: FirebaseDatabase) {
         val data = mapOf(
             "id" to UUID.randomUUID().toString(),
             "type" to "play",
-            "trackId" to currentTrack.value.trackID)
+            "trackId" to currentTrack.value.trackID
+        )
         simulatedDevicesRef.child("action").setValue(data)
 
     }
-    fun handleAction(action: String){
 
-            val data = mapOf(
-                "id" to UUID.randomUUID().toString(),
-                "type" to action,
-                "trackId" to currentTrack.value.trackID)
-            simulatedDevicesRef.child("action").setValue(data)
+    fun handleAction(action: String) {
+
+        val data = mapOf(
+            "id" to UUID.randomUUID().toString(),
+            "type" to action,
+            "trackId" to currentTrack.value.trackID
+        )
+        simulatedDevicesRef.child("action").setValue(data)
 
 
     }
 
-    fun playSong(song: Song){
+    fun playSong(song: Song) {
         currentTrack.value = song
         val data = mapOf(
             "id" to UUID
@@ -130,15 +137,15 @@ fun MediaControls(db: FirebaseDatabase) {
     }
     viewModel.ttsPhrase.observe(LocalContext.current as androidx.activity.ComponentActivity) { phrase ->
         Log.d("MediaControls", "TTS phrase: $phrase")
-        if(phrase.contains("next")){
+        if (phrase.contains("next")) {
             nextSong()
-        }else if(phrase.contains("previous")){
+        } else if (phrase.contains("previous")) {
             previousSong()
-        }else if(phrase.contains("play") ){
-            if(phrase.length == 4){
+        } else if (phrase.contains("play")) {
+            if (phrase.length == 4) {
                 handleAction("play")
 
-            }else {
+            } else {
                 val song =
                     songList.find { it.song.lowercase().contains(phrase.split("play")[1].trim()) }
                 if (song != null) {
@@ -147,15 +154,15 @@ fun MediaControls(db: FirebaseDatabase) {
                     Toast.makeText(context, "Song not found", Toast.LENGTH_SHORT).show()
                 }
             }
-        }else if(phrase.contains("pause")  ){
+        } else if (phrase.contains("pause")) {
             handleAction("pause")
 
 
-        }else if( phrase.contains("stop")){
+        } else if (phrase.contains("stop")) {
             handleAction("stop")
         }
 
-        if(phrase != ""){
+        if (phrase != "") {
             viewModel.ttsPhrase.postValue("")
 
         }
@@ -167,8 +174,10 @@ fun MediaControls(db: FirebaseDatabase) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
-                    status.value = snapshot.child("action").child("type").getValue(String::class.java)!!
-                    deviceStatus.value = snapshot.child("deviceStatus").getValue(String::class.java)!!
+                    status.value =
+                        snapshot.child("action").child("type").getValue(String::class.java)!!
+                    deviceStatus.value =
+                        snapshot.child("deviceStatus").getValue(String::class.java)!!
 
                     Log.d("onDataChangeMedia", "Status: ${status.value}")
                     Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
@@ -189,119 +198,215 @@ fun MediaControls(db: FirebaseDatabase) {
         }
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = "Current track:",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(text = currentTrack.value.song,
-            fontSize = 18.sp
-        )
-//        Card(Modifier.size(width = 180.dp, height = 100.dp)) {
-//            // Card content
-//        }
-        if(currentTrack.value != null && status.value == "play") {
-            MusicAnimation()
-        }
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
 
-        Text(
-            text = "Device status:",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = deviceStatus.value,
-            fontSize = 18.sp
-        )
-        Text(
-            text = "Status:",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold
-        )
-        Text(
-            text = status.value,
-            fontSize = 18.sp
-        )
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(vertical = 8.dp)
-        ) {
-            IconButton(
-                onClick = {
-                  previousSong()
-                },
-                modifier = Modifier.padding(horizontal = 8.dp)
+        Card() {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Default.SkipPrevious, contentDescription = "Previous Track")
-            }
-            IconButton(
-                onClick = {
-                    val newStatus = if (status.value == "play") "pause" else "play"
-                    val data = mapOf(
-                        "id" to UUID.randomUUID().toString(),
-                        "type" to newStatus)
-                    statusRef.setValue(data)
-                },
-                modifier = Modifier.padding(horizontal = 8.dp)
-            ) {
-                if (status.value == "play") {
-                    Icon(Icons.Default.Pause, contentDescription = "Pause")
-                } else {
-                    Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                Text(
+                    text = "Current track:",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = currentTrack.value.song,
+                    fontSize = 18.sp
+                )
+//                Image(
+//                    painter = painterResource(id = R.drawable.chumbawumba),
+//                    contentDescription = "Song image",
+//                    modifier = Modifier.size(100.dp)
+//                )
+                SpinningImage(status.value == "play", currentTrack.value )
+//                if(currentTrack.value != null && status.value == "play") {
+//                    MusicAnimation()
+//                }
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                ) {
+                    IconButton(
+                        onClick = {
+                            previousSong()
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    ) {
+                        Icon(Icons.Default.SkipPrevious, contentDescription = "Previous Track")
+                    }
+                    IconButton(
+                        onClick = {
+                            val newStatus = if (status.value == "play") "pause" else "play"
+                            val data = mapOf(
+                                "id" to UUID.randomUUID().toString(),
+                                "type" to newStatus
+                            )
+                            statusRef.setValue(data)
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    ) {
+                        if (status.value == "play") {
+                            Icon(Icons.Default.Pause, contentDescription = "Pause")
+                        } else {
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                        }
+                    }
+                    IconButton(
+                        onClick = {
+                            val data = mapOf(
+                                "id" to UUID.randomUUID().toString(),
+                                "type" to "stop"
+                            )
+                            statusRef.setValue(data)
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    ) {
+                        Icon(Icons.Default.Stop, contentDescription = "Stop")
+                    }
+                    IconButton(
+                        onClick = {
+                            nextSong()
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    ) {
+                        Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
+                    }
                 }
-            }
-            IconButton(
-                onClick = {
-                    val data = mapOf(
-                        "id" to UUID.randomUUID().toString(),
-                        "type" to "stop")
-                    statusRef.setValue(data)
-                },
-                modifier = Modifier.padding(horizontal = 8.dp)
-            ) {
-                Icon(Icons.Default.Stop, contentDescription = "Stop")
-            }
-            IconButton(
-                onClick = {
-                    nextSong()
-                },
-                modifier = Modifier.padding(horizontal = 8.dp)
-            ) {
-                Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
-            }
-        }
-        Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        LazyColumn(){
-            items(songList.size) { index ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .clickable {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+
+                ){
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .align(Alignment.CenterVertically)
+                            .padding(end = 2.dp) // add padding to the right side
+                            .wrapContentWidth(align = Alignment.Start)
 
 
-                            playSong(songList[index])
-                        }) {
-                       Column(
-                           modifier = Modifier.padding(8.dp)
-                       ) {
-                        Text(text = "${songList[index].song} - ${songList[index].artist}")
+                    ) {
+                        Text(
+                            text = "Device status:",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = deviceStatus.value,
+                            fontSize = 18.sp
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .wrapContentSize()
+                            .align(Alignment.CenterVertically)
+                            .padding(start = 2.dp), // add padding to the left side
 
-                       }
+                        horizontalAlignment = Alignment.End,
+
+                    ){
+                        Text(
+                            text = "Status:",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = status.value,
+                            fontSize = 18.sp
+                        )
+                    }
 
                 }
+
+
             }
         }
+//        Image(painterResource(id = R.drawable.chumbawumba), contentDescription = "Song image")
+        Spacer(modifier = Modifier.height(8.dp))
+        Card() {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                LazyColumn(
+                    modifier = Modifier.padding(16.dp),
+                ) {
+                    items(songList.size) { index ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .clickable {
+
+
+                                    playSong(songList[index])
+                                }) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(8.dp)
+                                    .wrapContentWidth()
+                            ) {
+
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxHeight()
+                                            .align(Alignment.CenterVertically)
+                                            .padding(end = 8.dp) // add padding to the right side
+                                            .wrapContentWidth(align = Alignment.CenterHorizontally)
+                                    ) {
+                                        Text(
+                                            text = "${songList[index].song} \n",
+                                            modifier = Modifier.align(Alignment.Start)
+                                        )
+                                        Text(text = "${songList[index].artist}")
+                                    }
+                                    Column(
+
+                                        modifier = Modifier
+                                            .wrapContentSize()
+                                            .align(Alignment.CenterVertically)
+                                            .padding(start = 8.dp), // add padding to the left side
+
+                                        horizontalAlignment = Alignment.End,
+
+                                        ) {
+                                        if (currentTrack.value.song == songList[index].song ) {
+
+                                            MusicAnimation(status.value == "play")
+
+                                        }
+                                    }
+                                }
+
+
+                            }
+
+                        }
+                    }
+                }
+
+
+            }
+
+
+        }
+
     }
+
+
+
+
 }
 
+
 @Composable
-fun MusicAnimation() {
-    var isPlaying by remember {
-        mutableStateOf(true)
-    }
+fun MusicAnimation(play: Boolean) {
 
 // for speed
     var speed by remember {
@@ -327,7 +432,7 @@ fun MusicAnimation() {
         // pass isPlaying we created above,
         // changing isPlaying will recompose
         // Lottie and pause/play
-        isPlaying = isPlaying,
+        isPlaying = play,
 
         // pass speed we created above,
         // changing speed will increase Lottie
@@ -352,9 +457,52 @@ fun MusicAnimation() {
         LottieAnimation(
             composition,
             progress,
-            modifier = Modifier.size(100.dp)
+            modifier = Modifier.size(30.dp)
         )
 
 
     }
+}
+
+@Composable
+fun SpinningImage(spin: Boolean, currentTrack: Song) {
+
+    var shouldSpin by remember { mutableStateOf(spin) }
+    var albumImage by remember { mutableStateOf(currentTrack.albumIMG)}
+
+
+    var rotationState by remember { mutableStateOf(0f) }
+    val rotationAnim = remember {
+        Animatable(0f)
+    }
+    LaunchedEffect(spin) {
+        shouldSpin = spin
+        rotationAnim.animateTo(
+            targetValue = rotationAnim.value + 360f, // modify targetValue to be a multiple of 360
+            animationSpec = infiniteRepeatable(
+                animation = tween(durationMillis = 2000, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart
+            )
+        )
+    }
+    rotationState = rotationAnim.value
+    albumImage = currentTrack.albumIMG
+    Log.i("SpinningImage ID", "SpinningImage : $albumImage")
+
+   if(albumImage != 0) {
+       Image(
+           painter = painterResource(id = albumImage),
+           contentDescription = "avatar",
+           contentScale = ContentScale.Crop,
+           modifier = Modifier
+               .size(100.dp)
+               .clip(CircleShape)
+               .border(2.dp, Color.Gray, CircleShape)
+               .graphicsLayer {
+                   if (shouldSpin) {
+                       rotationZ = rotationState
+                   }
+               }
+       )
+   }
 }
