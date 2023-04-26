@@ -3,14 +3,13 @@ package com.example.unitmobile.components
 import android.app.Application
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.Card
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
@@ -18,8 +17,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.toLowerCase
@@ -27,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.airbnb.lottie.compose.*
+import com.example.unitmobile.R
 import com.example.unitmobile.SharedViewModel
 import com.example.unitmobile.Song
 import com.example.unitmobile.SongSaver
@@ -194,6 +198,13 @@ fun MediaControls(db: FirebaseDatabase) {
         Text(text = currentTrack.value.song,
             fontSize = 18.sp
         )
+//        Card(Modifier.size(width = 180.dp, height = 100.dp)) {
+//            // Card content
+//        }
+        if(currentTrack.value != null && status.value == "play") {
+            MusicAnimation()
+        }
+
         Text(
             text = "Device status:",
             fontSize = 18.sp,
@@ -283,5 +294,67 @@ fun MediaControls(db: FirebaseDatabase) {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun MusicAnimation() {
+    var isPlaying by remember {
+        mutableStateOf(true)
+    }
+
+// for speed
+    var speed by remember {
+        mutableStateOf(1f)
+    }
+
+    val composition by rememberLottieComposition(
+
+        LottieCompositionSpec
+            // here `code` is the file name of lottie file
+            // use it accordingly
+            .RawRes(R.raw.music)
+    )
+
+    // to control the animation
+    val progress by animateLottieCompositionAsState(
+        // pass the composition created above
+        composition,
+
+        // Iterates Forever
+        iterations = LottieConstants.IterateForever,
+
+        // pass isPlaying we created above,
+        // changing isPlaying will recompose
+        // Lottie and pause/play
+        isPlaying = isPlaying,
+
+        // pass speed we created above,
+        // changing speed will increase Lottie
+        speed = speed,
+
+        // this makes animation to restart
+        // when paused and play
+        // pass false to continue the animation
+        // at which it was paused
+        restartOnPlay = false
+
+    )
+    Column(
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+
+        // LottieAnimation
+        // Pass the composition
+        // and the progress state
+        LottieAnimation(
+            composition,
+            progress,
+            modifier = Modifier.size(100.dp)
+        )
+
+
     }
 }
