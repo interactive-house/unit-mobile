@@ -36,11 +36,6 @@ fun MediaScreen(db: FirebaseDatabase) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Media Screen",
-            fontSize = 24.sp,
-            style = TextStyle(textDecoration = TextDecoration.Underline)
-        )
         MediaControls(db = db)
     }
 

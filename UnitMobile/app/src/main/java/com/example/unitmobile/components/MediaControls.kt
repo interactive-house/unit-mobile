@@ -325,7 +325,7 @@ fun MediaControls(db: FirebaseDatabase) {
         }
 //        Image(painterResource(id = R.drawable.chumbawumba), contentDescription = "Song image")
         Spacer(modifier = Modifier.height(8.dp))
-        Card() {
+        Card( modifier = Modifier.fillMaxSize()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 LazyColumn(
@@ -388,6 +388,9 @@ fun MediaControls(db: FirebaseDatabase) {
 
                             }
 
+                        }
+                        if (index == songList.size - 1){
+                            Divider(startIndent = 0.dp, thickness = 1.dp, color = Color.Gray)
                         }
 
                     }
