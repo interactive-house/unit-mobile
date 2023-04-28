@@ -258,7 +258,8 @@ fun NavigationGraph(
                     onRegisterCallback(it)
                 },
                 Modifier,
-                context = LocalContext.current
+                context = LocalContext.current,
+                db
 
             )
         }

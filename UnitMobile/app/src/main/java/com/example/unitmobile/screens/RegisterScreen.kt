@@ -23,12 +23,14 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 @Composable
 fun RegisterScreen(
     onRegister: (Any?) -> Unit,
     modifier: Modifier = Modifier,
-    context: Context = LocalContext.current
+    context: Context = LocalContext.current,
+    db: FirebaseDatabase
 
 ) {
 
@@ -36,6 +38,14 @@ fun RegisterScreen(
 
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+
+    var validationCode by rememberSaveable { mutableStateOf("") }
+    var validationCodeFromDB by rememberSaveable { mutableStateOf("") }
+
+    db.getReference("ValidationCode").get().addOnSuccessListener {
+        validationCodeFromDB = it.value.toString()
+    }
+
 
     Column(
         modifier = modifier.fillMaxSize(),
@@ -54,21 +64,37 @@ fun RegisterScreen(
             label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation()
         )
+        TextField(
+            value = validationCode,
+            onValueChange = { validationCode = it },
+            label = { Text("Validation Code") },
+            visualTransformation = PasswordVisualTransformation()
+        )
         Button(
             modifier = Modifier.padding(vertical = 24.dp),
             onClick = {
-                auth.createUserWithEmailAndPassword(username, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            onRegister(task.result?.user)
-                        } else {
-                            Toast.makeText(
-                                context,
-                                "Login failed",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                if (validationCode == validationCodeFromDB){
+                    auth.createUserWithEmailAndPassword(username, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                onRegister(task.result?.user)
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Login failed",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
-                    }
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Validation Code is wrong",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
+
             }
         ) {
             Text("Sign Up")
