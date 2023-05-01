@@ -18,11 +18,10 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.example.unitmobile.components.TextFieldWithToggle
 import com.google.firebase.auth.FirebaseAuth
-import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 @Composable
 fun LoginScreen(
@@ -33,7 +32,7 @@ fun LoginScreen(
 ){
     val auth = FirebaseAuth.getInstance()
 
-    var username by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
 
     Column(
@@ -43,31 +42,40 @@ fun LoginScreen(
     ) {
         Text("Welcome to Smart House App")
         TextField(
-            value = username,
-            onValueChange = { username = it },
+            value = email,
+            onValueChange = { email = it },
             label = { Text("Username") }
         )
-        TextField(
+
+        TextFieldWithToggle(
+            label = "Password",
             value = password,
-            onValueChange = { password = it },
-            label = { Text("Password") },
-            visualTransformation = PasswordVisualTransformation()
+            onValueChange = { password = it }
         )
         Button(
             modifier = Modifier.padding(vertical = 24.dp),
             onClick = {
-                auth.signInWithEmailAndPassword(username, password)
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            onLogIn(task.result?.user)
-                        } else {
-                            Toast.makeText(
-                                context,
-                                "Login failed",
-                                Toast.LENGTH_SHORT
-                            ).show()
+                if (email.isNotEmpty() && password.isNotEmpty()) {
+                    auth.signInWithEmailAndPassword(email, password)
+                        .addOnCompleteListener { task ->
+                            if (task.isSuccessful) {
+                                onLogIn(task.result?.user)
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "Login failed, please try again",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
                         }
-                    }
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Please fill in all the fields",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+
             }
         ) {
             Text("Login")
@@ -75,8 +83,6 @@ fun LoginScreen(
         CenteredClickableText(text = "Don't have an account? Sign up", onClick={
             Log.i("showRegister", "clicked")
             showRegisterCallback()
-
-
         })
 
         }
