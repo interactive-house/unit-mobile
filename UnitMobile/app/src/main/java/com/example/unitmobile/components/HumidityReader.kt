@@ -6,25 +6,31 @@ import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.example.unitmobile.MyNotification
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.launch
 import java.util.*
 
 @Composable
 fun HumidityReader(
     db: FirebaseDatabase,
-    context: Context = LocalContext.current
+    context: Context = LocalContext.current,
+    lifecycleOwner: LifecycleOwner
 ) {
     val humidity = rememberSaveable { mutableStateOf("") }
-    val firstRun = rememberSaveable { mutableStateOf(true) }
 
     val humidityRef = db.getReference("SmartHomeValueSoil").child("StatusOfSoil")
 
@@ -33,13 +39,10 @@ fun HumidityReader(
             override fun onDataChange(snapshot: DataSnapshot) {
                 humidity.value = snapshot.value.toString()
                 Log.d("onDataChangeHumidity", "Humidity: ${humidity.value}")
-                Log.d("onDataChangeHumidity", "First run: ${firstRun.value}")
-                if (!firstRun.value) {
-                    Log.d("onDataChangeHumidity", "Not first run")
+                Log.i("onDataChangeHumidity", "current state: ${lifecycleOwner.lifecycle.currentState}")
+                if (lifecycleOwner.lifecycle.currentState != (Lifecycle.State.STARTED ) &&
+                        lifecycleOwner.lifecycle.currentState != (Lifecycle.State.RESUMED)) {
                     sendNotification(context, humidity.value)
-                } else {
-                    Log.d("onDataChangeHumidity", "First run")
-                    firstRun.value = false
                 }
             }
 

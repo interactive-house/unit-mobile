@@ -15,6 +15,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.semantics.Role.Companion.Button
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -46,7 +47,7 @@ fun HomeScreen(
         ItemDivider()
         WindowSwitch(db, itemStateTrue[1], itemStateFalse[1])
         ItemDivider()
-        HumidityReader(db = db)
+        HumidityReader(db = db, lifecycleOwner = LocalLifecycleOwner.current)
         //ItemDivider()
         //MediaControls(db = db)
     }
