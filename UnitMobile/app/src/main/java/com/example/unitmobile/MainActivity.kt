@@ -352,6 +352,7 @@ fun handleSpeechToText(
     if (lowercaseText.contains("play") || lowercaseText.contains("pause") ||
         lowercaseText.contains("stop") || lowercaseText.contains("next") || lowercaseText.contains("previous")
     ) {
+
         viewModel.ttsPhrase.postValue(lowercaseText)
 
         if (currentScreen != BottomNavItem.Media.screen_route) {
