@@ -41,6 +41,7 @@ import java.util.*
 
 @Composable
 fun MediaControls(db: FirebaseDatabase) {
+    Log.i("MediaControls RECOMPOSE", "MediaControls")
 
 
     val viewModel: SharedViewModel = ViewModelProvider(
@@ -57,6 +58,8 @@ fun MediaControls(db: FirebaseDatabase) {
 
     val statusRef = db.getReference("simulatedDevices").child("action")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
+    viewModel.initSongs()
+
 
 
 
@@ -71,17 +74,17 @@ fun MediaControls(db: FirebaseDatabase) {
         songList.find { it.trackID == track["trackId"] }?.let { currentTrack.value = it }
 
 
-
     }
 
 
 
-    viewModel.initSongs()
+
 
     fun nextSong() {
         val currentIndex =
             songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         val nextIndex = (currentIndex + 1) % songList.size
+        Log.i("MediaControls", "Playing next song: $currentIndex => $nextIndex")
         currentTrack.value = songList[nextIndex]
 
         val data = mapOf(
@@ -97,6 +100,7 @@ fun MediaControls(db: FirebaseDatabase) {
         val currentIndex =
             songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         val previousIndex = if (currentIndex == 0) songList.size - 1 else currentIndex - 1
+        Log.i("MediaControls", "Playing previous song: $currentIndex => $previousIndex")
 
         currentTrack.value = songList[previousIndex]
 
@@ -110,12 +114,29 @@ fun MediaControls(db: FirebaseDatabase) {
     }
 
     fun handleAction(action: String) {
+        val data: Map<String, Any>
 
-        val data = mapOf(
-            "id" to UUID.randomUUID().toString(),
-            "type" to action,
-            "trackId" to currentTrack.value.trackID
-        )
+        if (action == "stop") {
+
+            currentTrack.value = Song("", "", "", 0)
+            data = mapOf(
+                "id" to UUID.randomUUID().toString(),
+                "type" to action
+            )
+        } else {
+            if( currentTrack.value.trackID == ""){
+                return
+            }
+            data = mapOf(
+                "id" to UUID.randomUUID().toString(),
+                "type" to action,
+                "trackId" to currentTrack.value.trackID
+            )
+
+        }
+
+
+
         simulatedDevicesRef.child("action").setValue(data)
 
 
@@ -137,6 +158,12 @@ fun MediaControls(db: FirebaseDatabase) {
     }
     viewModel.ttsPhrase.observe(LocalContext.current as androidx.activity.ComponentActivity) { phrase ->
         Log.d("MediaControls", "TTS phrase: $phrase")
+        val phrase = phrase.lowercase()
+
+        if (phrase != "") {
+            viewModel.ttsPhrase.value = ""
+
+        }
         if (phrase.contains("next")) {
             nextSong()
         } else if (phrase.contains("previous")) {
@@ -162,10 +189,7 @@ fun MediaControls(db: FirebaseDatabase) {
             handleAction("stop")
         }
 
-        if (phrase != "") {
-            viewModel.ttsPhrase.postValue("")
 
-        }
     }
 
 
@@ -219,7 +243,7 @@ fun MediaControls(db: FirebaseDatabase) {
 //                    contentDescription = "Song image",
 //                    modifier = Modifier.size(100.dp)
 //                )
-                SpinningImage(status.value == "play", currentTrack.value )
+                SpinningImage(status.value == "play", currentTrack.value)
 //                if(currentTrack.value != null && status.value == "play") {
 //                    MusicAnimation()
 //                }
@@ -239,11 +263,7 @@ fun MediaControls(db: FirebaseDatabase) {
                     IconButton(
                         onClick = {
                             val newStatus = if (status.value == "play") "pause" else "play"
-                            val data = mapOf(
-                                "id" to UUID.randomUUID().toString(),
-                                "type" to newStatus
-                            )
-                            statusRef.setValue(data)
+                            handleAction(newStatus)
                         },
                         modifier = Modifier.padding(horizontal = 8.dp)
                     ) {
@@ -255,11 +275,8 @@ fun MediaControls(db: FirebaseDatabase) {
                     }
                     IconButton(
                         onClick = {
-                            val data = mapOf(
-                                "id" to UUID.randomUUID().toString(),
-                                "type" to "stop"
-                            )
-                            statusRef.setValue(data)
+                            handleAction("stop")
+
                         },
                         modifier = Modifier.padding(horizontal = 8.dp)
                     ) {
@@ -278,7 +295,7 @@ fun MediaControls(db: FirebaseDatabase) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
 
-                ){
+                ) {
                     Column(
                         modifier = Modifier
                             .weight(1f)
@@ -306,7 +323,7 @@ fun MediaControls(db: FirebaseDatabase) {
 
                         horizontalAlignment = Alignment.End,
 
-                    ){
+                        ) {
                         Text(
                             text = "Status:",
                             fontSize = 18.sp,
@@ -325,7 +342,7 @@ fun MediaControls(db: FirebaseDatabase) {
         }
 //        Image(painterResource(id = R.drawable.chumbawumba), contentDescription = "Song image")
         Spacer(modifier = Modifier.height(8.dp))
-        Card( modifier = Modifier.fillMaxSize()) {
+        Card(modifier = Modifier.fillMaxSize()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 LazyColumn(
@@ -377,7 +394,7 @@ fun MediaControls(db: FirebaseDatabase) {
                                         horizontalAlignment = Alignment.End,
 
                                         ) {
-                                        if (currentTrack.value.song == songList[index].song ) {
+                                        if (currentTrack.value.song == songList[index].song) {
 
                                             MusicAnimation(status.value == "play")
 
@@ -389,7 +406,7 @@ fun MediaControls(db: FirebaseDatabase) {
                             }
 
                         }
-                        if (index == songList.size - 1){
+                        if (index == songList.size - 1) {
                             Divider(startIndent = 0.dp, thickness = 1.dp, color = Color.Gray)
                         }
 
@@ -403,8 +420,6 @@ fun MediaControls(db: FirebaseDatabase) {
         }
 
     }
-
-
 
 
 }
@@ -473,7 +488,7 @@ fun MusicAnimation(play: Boolean) {
 fun SpinningImage(spin: Boolean, currentTrack: Song) {
 
     var shouldSpin by remember { mutableStateOf(spin) }
-    var albumImage by remember { mutableStateOf(currentTrack.albumIMG)}
+    var albumImage by remember { mutableStateOf(currentTrack.albumIMG) }
 
 
     var rotationState by remember { mutableStateOf(0f) }
@@ -493,20 +508,20 @@ fun SpinningImage(spin: Boolean, currentTrack: Song) {
     rotationState = rotationAnim.value
     albumImage = currentTrack.albumIMG
 
-   if(albumImage != 0) {
-       Image(
-           painter = painterResource(id = albumImage),
-           contentDescription = "avatar",
-           contentScale = ContentScale.Crop,
-           modifier = Modifier
-               .size(100.dp)
-               .clip(CircleShape)
-               .border(2.dp, Color.Gray, CircleShape)
-               .graphicsLayer {
-                   if (shouldSpin) {
-                       rotationZ = rotationState
-                   }
-               }
-       )
-   }
+    if (albumImage != 0) {
+        Image(
+            painter = painterResource(id = albumImage),
+            contentDescription = "avatar",
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(100.dp)
+                .clip(CircleShape)
+                .border(2.dp, Color.Gray, CircleShape)
+                .graphicsLayer {
+                    if (shouldSpin) {
+                        rotationZ = rotationState
+                    }
+                }
+        )
+    }
 }
