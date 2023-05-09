@@ -3,8 +3,10 @@ package com.example.unitmobile.components
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -94,8 +96,7 @@ fun ItemSwitch(
             Image(
                 painterResource(imageRes),
                 contentDescription = null,
-                modifier = Modifier.size(48.dp),
-                contentScale = ContentScale.FillBounds
+                modifier = Modifier.size(64.dp),
             )
         }
     }

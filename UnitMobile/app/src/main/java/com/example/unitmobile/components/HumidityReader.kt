@@ -1,7 +1,10 @@
 package com.example.unitmobile.components
 
 import android.content.Context
+import android.graphics.drawable.AnimatedImageDrawable
 import android.util.Log
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -11,12 +14,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.toLowerCase
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.example.unitmobile.MyNotification
+import com.example.unitmobile.R
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -66,6 +72,23 @@ fun HumidityReader(
         "wet" -> 1.0f
         else -> 0.0f
     })
+    if (humidity.value.lowercase() == "dry") {
+        SoilImage(R.drawable.soil_dry)
+    } else if (humidity.value.lowercase() == "wet") {
+        SoilImage(R.drawable.soil_wet)
+    } else {
+        SoilImage(R.drawable.soil_perfect)
+    }
+
+}
+
+@Composable
+fun SoilImage(image: Int){
+    Image(
+        painterResource(image),
+        contentDescription = "Soil",
+        modifier = androidx.compose.ui.Modifier.size(100.dp)
+    )
 }
 fun sendNotification(
     context: Context,
