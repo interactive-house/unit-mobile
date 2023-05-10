@@ -14,6 +14,8 @@ import androidx.compose.material.icons.filled.Circle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,12 +45,15 @@ fun ItemSwitch(
     val tint = if (isChecked) Color(0xFF4CAF50) else Color.Red
     val imageRes = if (isChecked) imageResOn else imageResOff
     val itemState = if (isChecked) "$label is $itemStateTrue" else "$label is $itemStateFalse"
+    val loading = rememberSaveable { mutableStateOf(true) }
+
 
     DisposableEffect(reference) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 switch.value = (itemStateTrue == snapshot.value.toString().lowercase())
                 Log.d("TAG", "onDataChange: ${snapshot.key}${snapshot.value}")
+                loading.value = false
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -85,14 +90,17 @@ fun ItemSwitch(
                 fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
-            Switch(
-                checked = isChecked,
-                onCheckedChange = { isChecked ->
-                    reference.setValue(if (isChecked) itemStateTrue else itemStateFalse)
-                },
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-
+            if(loading.value){
+                LoadingScreen()
+            }else {
+                Switch(
+                    checked = isChecked,
+                    onCheckedChange = { isChecked ->
+                        reference.setValue(if (isChecked) itemStateTrue else itemStateFalse)
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
             Image(
                 painterResource(imageRes),
                 contentDescription = null,

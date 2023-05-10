@@ -1,12 +1,21 @@
 package com.example.unitmobile.components
 
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Circle
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.example.unitmobile.R
 import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 
 @Composable
 fun LampSwitch(
@@ -29,6 +38,7 @@ fun LampSwitch(
         reference = reference
     )
 }
+
 @Composable
 fun DoorSwitch(
     db: FirebaseDatabase,
@@ -50,6 +60,7 @@ fun DoorSwitch(
         reference = reference
     )
 }
+
 @Composable
 fun WindowSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: String) {
     val switch = rememberSaveable { mutableStateOf(false) }
@@ -65,5 +76,19 @@ fun WindowSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: St
         itemStateTrue = itemStateTrue,
         switch = switch,
         reference = reference
+
     )
 }
+
+@Composable
+fun LoadingScreen() {
+
+
+
+    CircularProgressIndicator(
+        modifier = Modifier.size(32.dp)
+    )
+
+}
+
+

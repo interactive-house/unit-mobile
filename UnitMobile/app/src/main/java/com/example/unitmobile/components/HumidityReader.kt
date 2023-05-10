@@ -39,6 +39,7 @@ fun HumidityReader(
     val humidity = rememberSaveable { mutableStateOf("") }
 
     val humidityRef = db.getReference("SmartHomeValueSoil").child("StatusOfSoil")
+    val loading = rememberSaveable { mutableStateOf(true) }
 
     DisposableEffect(humidityRef) {
         val listener = object : ValueEventListener {
@@ -50,6 +51,7 @@ fun HumidityReader(
                         lifecycleOwner.lifecycle.currentState != (Lifecycle.State.RESUMED)) {
                     sendNotification(context, humidity.value)
                 }
+                loading.value = false
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -61,23 +63,33 @@ fun HumidityReader(
             humidityRef.removeEventListener(listener)
         }
     }
+    if(loading.value){
+        Text(
+            text = "Loading...",
+            fontSize = 18.sp
+        )
+        LoadingScreen()
+    }else {
 
-    Text(
-        text = "Humidity: ${humidity.value}",
-        fontSize = 18.sp
-    )
-    LinearProgressIndicator(progress = when (humidity.value.lowercase()) {
-        "dry" -> 0.0f
-        "perfect" -> 0.5f
-        "wet" -> 1.0f
-        else -> 0.0f
-    })
-    if (humidity.value.lowercase() == "dry") {
-        SoilImage(R.drawable.soil_dry)
-    } else if (humidity.value.lowercase() == "wet") {
-        SoilImage(R.drawable.soil_wet)
-    } else {
-        SoilImage(R.drawable.soil_perfect)
+        Text(
+            text = "Humidity: ${humidity.value}",
+            fontSize = 18.sp
+        )
+        LinearProgressIndicator(
+            progress = when (humidity.value.lowercase()) {
+                "dry" -> 0.0f
+                "perfect" -> 0.5f
+                "wet" -> 1.0f
+                else -> 0.0f
+            }
+        )
+        if (humidity.value.lowercase() == "dry") {
+            SoilImage(R.drawable.soil_dry)
+        } else if (humidity.value.lowercase() == "wet") {
+            SoilImage(R.drawable.soil_wet)
+        } else {
+            SoilImage(R.drawable.soil_perfect)
+        }
     }
 
 }
