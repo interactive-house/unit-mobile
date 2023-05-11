@@ -222,43 +222,27 @@ fun MediaControls(db: FirebaseDatabase) {
         }
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        bottomBar = {
+            BottomAppBar(
+                backgroundColor = MaterialTheme.colors.primary,
+                contentColor = Color.White,
+                cutoutShape = CircleShape,
 
-        Card() {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
-                    text = "Current track:",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = currentTrack.value.song,
-                    fontSize = 18.sp
-                )
-//                Image(
-//                    painter = painterResource(id = R.drawable.chumbawumba),
-//                    contentDescription = "Song image",
-//                    modifier = Modifier.size(100.dp)
-//                )
-                SpinningImage(status.value == "play", currentTrack.value)
-//                if(currentTrack.value != null && status.value == "play") {
-//                    MusicAnimation()
-//                }
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.padding(vertical = 8.dp)
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = {
-                            previousSong()
-                        },
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    ) {
-                        Icon(Icons.Default.SkipPrevious, contentDescription = "Previous Track")
+                    Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+                        SpinningImage(status.value == "play", currentTrack.value)
+                    }
+                    IconButton(onClick = { handleAction("previous") }) {
+                        Icon(
+                            imageVector = Icons.Filled.SkipPrevious,
+                            contentDescription = "Previous song"
+                        )
                     }
                     IconButton(
                         onClick = {
@@ -273,156 +257,191 @@ fun MediaControls(db: FirebaseDatabase) {
                             Icon(Icons.Default.PlayArrow, contentDescription = "Play")
                         }
                     }
-                    IconButton(
-                        onClick = {
-                            handleAction("stop")
-
-                        },
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    ) {
-                        Icon(Icons.Default.Stop, contentDescription = "Stop")
+                    IconButton(onClick = { handleAction("stop") }) {
+                        Icon(
+                            imageVector = Icons.Filled.Stop,
+                            contentDescription = "Stop song"
+                        )
                     }
-                    IconButton(
-                        onClick = {
-                            nextSong()
-                        },
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    ) {
-                        Icon(Icons.Default.SkipNext, contentDescription = "Next Track")
+                    IconButton(onClick = { handleAction("next") }) {
+                        Icon(
+                            imageVector = Icons.Filled.SkipNext,
+                            contentDescription = "Next song"
+                        )
                     }
                 }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .align(Alignment.CenterVertically)
-                            .padding(end = 2.dp) // add padding to the right side
-                            .wrapContentWidth(align = Alignment.Start)
-
-
-                    ) {
-                        Text(
-                            text = "Device status:",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = deviceStatus.value,
-                            fontSize = 18.sp
-                        )
-                    }
-                    Column(
-                        modifier = Modifier
-                            .wrapContentSize()
-                            .align(Alignment.CenterVertically)
-                            .padding(start = 2.dp), // add padding to the left side
-
-                        horizontalAlignment = Alignment.End,
-
-                        ) {
-                        Text(
-                            text = "Status:",
-                            fontSize = 18.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = status.value,
-                            fontSize = 18.sp
-                        )
-                    }
-
-                }
-
-
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(modifier = Modifier.fillMaxSize()) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                LazyColumn(
-                    modifier = Modifier.padding(16.dp),
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxSize().padding(it)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .align(Alignment.CenterVertically)
+                        .padding(end = 2.dp) // add padding to the right side
+                        .wrapContentWidth(align = Alignment.Start)
+
+
                 ) {
-                    items(songList.size) { index ->
-                        Divider(startIndent = 0.dp, thickness = 1.dp, color = Color.Gray)
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
-                                .clickable {
+                    Text(
+                        text = "Device status:",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = deviceStatus.value,
+                        fontSize = 18.sp
+                    )
+                }
+                Column(
+                    modifier = Modifier
+                        .wrapContentSize()
+                        .align(Alignment.CenterVertically)
+                        .padding(start = 2.dp), // add padding to the left side
+
+                    horizontalAlignment = Alignment.End,
+
+                    ) {
+                    Text(
+                        text = "Status:",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = status.value,
+                        fontSize = 18.sp
+                    )
+                }
+
+            }
 
 
-                                    playSong(songList[index])
-                                }) {
-                            Column(
+
+            Spacer(modifier = Modifier.height(8.dp))
+            Card(modifier = Modifier.fillMaxSize()) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(text = "Song list: ", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    LazyColumn(
+                        modifier = Modifier.padding(16.dp),
+                    ) {
+                        items(songList.size) { index ->
+                            Divider(startIndent = 0.dp, thickness = 1.dp, color = Color.Gray)
+                            Card(
                                 modifier = Modifier
+                                    .fillMaxWidth()
                                     .padding(8.dp)
-                                    .wrapContentWidth()
-                            ) {
+                                    .clickable {
 
 
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                                        playSong(songList[index])
+                                    }) {
+                                Column(
+                                    modifier = Modifier
+                                        .padding(8.dp)
+                                        .wrapContentWidth()
                                 ) {
-                                    Column(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .fillMaxHeight()
-                                            .align(Alignment.CenterVertically)
-                                            .padding(end = 8.dp) // add padding to the right side
-                                            .wrapContentWidth(align = Alignment.CenterHorizontally)
+
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
-                                        Text(
-                                            text = "${songList[index].song} \n",
-                                            modifier = Modifier.align(Alignment.Start)
-                                        )
-                                        Text(text = "${songList[index].artist}")
-                                    }
-                                    Column(
-
-                                        modifier = Modifier
-                                            .wrapContentSize()
-                                            .align(Alignment.CenterVertically)
-                                            .padding(start = 8.dp), // add padding to the left side
-
-                                        horizontalAlignment = Alignment.End,
-
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .fillMaxHeight()
+                                                .align(Alignment.CenterVertically)
+                                                .padding(end = 8.dp) // add padding to the right side
+                                                .wrapContentWidth(align = Alignment.CenterHorizontally)
                                         ) {
-                                        if (currentTrack.value.song == songList[index].song) {
+                                            Text(
+                                                text = "${songList[index].song} \n",
+                                                modifier = Modifier.align(Alignment.Start)
+                                            )
+                                            Text(text = "${songList[index].artist}")
+                                        }
+                                        Column(
 
-                                            MusicAnimation(status.value == "play")
+                                            modifier = Modifier
+                                                .wrapContentSize()
+                                                .align(Alignment.CenterVertically)
+                                                .padding(start = 8.dp), // add padding to the left side
 
+                                            horizontalAlignment = Alignment.End,
+
+                                            ) {
+                                            if (currentTrack.value.song == songList[index].song) {
+
+                                                MusicAnimation(status.value == "play")
+
+                                            }
                                         }
                                     }
+
+
                                 }
 
-
+                            }
+                            if (index == songList.size - 1) {
+                                Divider(startIndent = 0.dp, thickness = 1.dp, color = Color.Gray)
                             }
 
                         }
-                        if (index == songList.size - 1) {
-                            Divider(startIndent = 0.dp, thickness = 1.dp, color = Color.Gray)
-                        }
-
                     }
+
+
                 }
 
 
             }
-
 
         }
 
     }
 
 
+
+
 }
+//@Composable
+//fun songSheet(){
+//    val (isSheetOpen, setIsSheetOpen) = remember { mutableStateOf(false) }
+//    val sheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+//
+//    ModalBottomSheetLayout(
+//        sheetState = sheetState,
+//        sheetContent = {
+//            // Content of the sheet
+//            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+//                Text("Sheet Content")
+//            }
+//        },
+//        content = {
+//            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+//                Text("Main Content")
+//            }
+//            BottomAppBar(
+//                backgroundColor = Color.White,
+//                cutoutShape = MaterialTheme.shapes.bottomAppBar,
+//                contentPadding = PaddingValues(16.dp)
+//            ) {
+//                IconButton(onClick = { setIsSheetOpen(true) }) {
+//                    Icon(
+//                        painter = painterResource(id = R.drawable.ic_menu),
+//                        contentDescription = "Open Menu"
+//                    )
+//                }
+//            }
+//        }
+//    )
+//
+//}
 
 
 @Composable
@@ -514,9 +533,11 @@ fun SpinningImage(spin: Boolean, currentTrack: Song) {
             contentDescription = "avatar",
             contentScale = ContentScale.Crop,
             modifier = Modifier
-                .size(100.dp)
+                .size(50.dp)
                 .clip(CircleShape)
                 .border(2.dp, Color.Gray, CircleShape)
+                .fillMaxSize()
+                .aspectRatio(1f)
                 .graphicsLayer {
                     if (shouldSpin) {
                         rotationZ = rotationState
