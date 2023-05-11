@@ -8,8 +8,15 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -21,16 +28,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.input.pointer.consumeAllChanges
+import androidx.compose.ui.input.pointer.consumePositionChange
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -45,6 +59,7 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import java.util.*
+import kotlin.math.roundToInt
 
 @Composable
 fun MediaControls(db: FirebaseDatabase) {
@@ -242,62 +257,64 @@ fun MediaControls(db: FirebaseDatabase) {
 
 
                 bottomBar = {
-                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online") {
-                        BottomAppBar(
-                            backgroundColor = MaterialTheme.colors.primary,
-                            contentColor = Color.White,
+//                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online") {
+//                        BottomAppBar(
+//                            backgroundColor = MaterialTheme.colors.primary,
+//                            contentColor = Color.White,
+//
+//                            cutoutShape = CircleShape,
+//                            modifier = Modifier.clickable {
+//                                sheetOpen = !sheetOpen
+//
+//                            }
+//
+//
+//                        ) {
+//                            Row(
+//                                modifier = Modifier.fillMaxWidth(),
+//                                horizontalArrangement = Arrangement.Center,
+//                                verticalAlignment = Alignment.CenterVertically
+//                            ) {
+//                                Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+//                                    SpinningImage(status.value == "Playing", currentTrack.value, 50.dp)
+//                                }
+//                                IconButton(onClick = { previousSong() }) {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.SkipPrevious,
+//                                        contentDescription = "Previous song"
+//                                    )
+//                                }
+//                                IconButton(
+//                                    onClick = {
+//                                        val newStatus = if (status.value == "Playing") "pause" else "play"
+//                                        handleAction(newStatus)
+//                                    },
+//                                    modifier = Modifier.padding(horizontal = 8.dp)
+//                                ) {
+//                                    if (status.value == "Playing") {
+//                                        Icon(Icons.Default.Pause, contentDescription = "Pause")
+//                                    } else {
+//                                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+//                                    }
+//                                }
+//                                IconButton(onClick = { handleAction("stop") }) {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.Stop,
+//                                        contentDescription = "Stop song"
+//                                    )
+//                                }
+//                                IconButton(onClick = { nextSong() }) {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.SkipNext,
+//                                        contentDescription = "Next song"
+//                                    )
+//                                }
+//                            }
+//
+//                        }
+//                    }
+                    DraggableRow()
 
-                            cutoutShape = CircleShape,
-                            modifier = Modifier.clickable {
-                                sheetOpen = !sheetOpen
-
-                            }
-
-
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(modifier = Modifier.align(Alignment.CenterVertically)) {
-                                    SpinningImage(status.value == "Playing", currentTrack.value, 50.dp)
-                                }
-                                IconButton(onClick = { previousSong() }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.SkipPrevious,
-                                        contentDescription = "Previous song"
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        val newStatus = if (status.value == "Playing") "pause" else "play"
-                                        handleAction(newStatus)
-                                    },
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                ) {
-                                    if (status.value == "Playing") {
-                                        Icon(Icons.Default.Pause, contentDescription = "Pause")
-                                    } else {
-                                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-                                    }
-                                }
-                                IconButton(onClick = { handleAction("stop") }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Stop,
-                                        contentDescription = "Stop song"
-                                    )
-                                }
-                                IconButton(onClick = { nextSong() }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.SkipNext,
-                                        contentDescription = "Next song"
-                                    )
-                                }
-                            }
-
-                        }
-                    }
 
                 }
 
@@ -773,5 +790,48 @@ fun DeviceOfflineAnimation() {
 
 
 }
+@Composable
+fun DraggableRow() {
+    var dragOffset by remember { mutableStateOf(0f) }
+
+    Row(Modifier.fillMaxWidth()) {
+        DraggableText("Content 1", dragOffset) { delta ->
+            dragOffset += delta
+        }
+
+        DraggableText("Content 2", dragOffset) { delta ->
+            dragOffset += delta
+        }
+    }
+}
+
+@Composable
+fun DraggableText(text: String, dragOffset: Float, onDrag: (Float) -> Unit) {
+    val offsetX = remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+
+    val draggableModifier = Modifier.pointerInput(Unit) {
+        detectDragGestures { change, dragAmount ->
+            val dragDelta = with(density) { dragAmount.x / density.density }
+            onDrag(dragDelta)
+            if (change.positionChange() != Offset.Zero) change.consume()
+        }
+    }
+
+    Box(
+        Modifier
+            .background(Color.Red)
+            .width(200.dp)
+            .offset(x = (dragOffset + offsetX.value).dp, y = 0.dp)
+            .then(draggableModifier)
+    ) {
+        Text(text, Modifier.padding(16.dp), color = Color.White)
+    }
+}
+
+
+
+
+
 
 
