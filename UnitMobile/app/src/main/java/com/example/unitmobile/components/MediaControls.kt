@@ -79,9 +79,7 @@ fun MediaControls(db: FirebaseDatabase) {
     }
     viewModel.currentTrack.observe(LocalContext.current as androidx.activity.ComponentActivity) { track ->
         Log.d("MediaControls current track123", "Current track: $track")
-        songList.find { it.trackID == track["trackId"] }?.let { currentTrack.value = it }
-
-
+        songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
     }
 
 
@@ -93,12 +91,10 @@ fun MediaControls(db: FirebaseDatabase) {
             songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         val nextIndex = (currentIndex + 1) % songList.size
         Log.i("MediaControls", "Playing next song: $currentIndex => $nextIndex")
-        currentTrack.value = songList[nextIndex]
 
         val data = mapOf(
             "id" to UUID.randomUUID().toString(),
-            "type" to "play",
-            "trackId" to currentTrack.value.trackID
+            "type" to "next"
         )
         simulatedDevicesRef.child("action").setValue(data)
 
@@ -110,15 +106,11 @@ fun MediaControls(db: FirebaseDatabase) {
         val previousIndex = if (currentIndex == 0) songList.size - 1 else currentIndex - 1
         Log.i("MediaControls", "Playing previous song: $currentIndex => $previousIndex")
 
-        currentTrack.value = songList[previousIndex]
-
         val data = mapOf(
             "id" to UUID.randomUUID().toString(),
-            "type" to "play",
-            "trackId" to currentTrack.value.trackID
+            "type" to "prev",
         )
         simulatedDevicesRef.child("action").setValue(data)
-
     }
 
     fun handleAction(action: String) {
@@ -294,8 +286,54 @@ fun MediaControls(db: FirebaseDatabase) {
                                 }
                             }
 
+<<<<<<< Updated upstream
                         }
                     }
+=======
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+                        SpinningImage(status.value == "play", currentTrack.value)
+                    }
+                    IconButton(onClick = { previousSong() }) {
+                        Icon(
+                            imageVector = Icons.Filled.SkipPrevious,
+                            contentDescription = "Previous song"
+                        )
+                    }
+                    IconButton(
+                        onClick = {
+                            val newStatus = if (status.value == "play") "pause" else "play"
+                            handleAction(newStatus)
+                        },
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    ) {
+                        if (status.value == "play") {
+                            Icon(Icons.Default.Pause, contentDescription = "Pause")
+                        } else {
+                            Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                        }
+                    }
+                    IconButton(onClick = { handleAction("stop") }) {
+                        Icon(
+                            imageVector = Icons.Filled.Stop,
+                            contentDescription = "Stop song"
+                        )
+                    }
+                    IconButton(onClick = { nextSong() }) {
+                        Icon(
+                            imageVector = Icons.Filled.SkipNext,
+                            contentDescription = "Next song"
+                        )
+                    }
+                }
+            }
+        }
+>>>>>>> Stashed changes
 
                 }
 

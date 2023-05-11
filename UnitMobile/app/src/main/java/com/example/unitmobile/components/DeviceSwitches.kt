@@ -80,15 +80,3 @@ fun WindowSwitch(db: FirebaseDatabase, itemStateTrue: String, itemStateFalse: St
     )
 }
 
-@Composable
-fun LoadingScreen() {
-
-
-
-    CircularProgressIndicator(
-        modifier = Modifier.size(32.dp)
-    )
-
-}
-
-

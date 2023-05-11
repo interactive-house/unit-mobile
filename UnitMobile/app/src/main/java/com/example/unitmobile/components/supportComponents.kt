@@ -1,5 +1,7 @@
 package com.example.unitmobile.components
 
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
@@ -8,8 +10,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun TextFieldWithToggle(
@@ -35,5 +39,11 @@ fun TextFieldWithToggle(
             }
 
         }
+    )
+}
+@Composable
+fun LoadingScreen() {
+    CircularProgressIndicator(
+        modifier = Modifier.size(32.dp)
     )
 }
