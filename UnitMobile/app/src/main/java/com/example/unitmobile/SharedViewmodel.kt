@@ -87,7 +87,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                     track["trackId"].toString(),
                     resID
                 )
-                var status = snapshot.child("status").value.toString()
+                var status = snapshot.child("state").value.toString()
+                Log.i("SharedViewModel", "Statusweqqqqqqqqqqqqqq: $status")
 
                 currentTrack.postValue(song)
                 currentStatus.postValue(status)

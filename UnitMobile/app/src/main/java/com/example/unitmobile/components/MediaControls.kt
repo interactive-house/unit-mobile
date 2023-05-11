@@ -81,6 +81,13 @@ fun MediaControls(db: FirebaseDatabase) {
         Log.d("MediaControls current track123", "Current track: $track")
         songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
 
+
+
+    }
+    viewModel.currentStatus.observe(LocalContext.current as androidx.activity.ComponentActivity) { it ->
+        Log.d("MediaControls", "Status: $status")
+        status.value = it.toString()
+
     }
 
 
@@ -95,8 +102,7 @@ fun MediaControls(db: FirebaseDatabase) {
 
         val data = mapOf(
             "id" to UUID.randomUUID().toString(),
-            "type" to "play",
-            "trackId" to currentTrack.value.trackID
+            "type" to "next"
         )
         simulatedDevicesRef.child("action").setValue(data)
 
@@ -110,8 +116,7 @@ fun MediaControls(db: FirebaseDatabase) {
 
         val data = mapOf(
             "id" to UUID.randomUUID().toString(),
-            "type" to "play",
-            "trackId" to currentTrack.value.trackID
+            "type" to "prev"
         )
         simulatedDevicesRef.child("action").setValue(data)
 
@@ -198,12 +203,13 @@ fun MediaControls(db: FirebaseDatabase) {
 
 
 
+
     DisposableEffect(simulatedDevicesRef) {
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
-                    status.value =
-                        snapshot.child("action").child("type").getValue(String::class.java)!!
+
+
                     deviceStatus.value =
                         snapshot.child("deviceStatus").getValue(String::class.java)!!
 
@@ -255,7 +261,7 @@ fun MediaControls(db: FirebaseDatabase) {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box(modifier = Modifier.align(Alignment.CenterVertically)) {
-                                    SpinningImage(status.value == "play", currentTrack.value, 50.dp)
+                                    SpinningImage(status.value == "Playing", currentTrack.value, 50.dp)
                                 }
                                 IconButton(onClick = { previousSong() }) {
                                     Icon(
@@ -265,12 +271,12 @@ fun MediaControls(db: FirebaseDatabase) {
                                 }
                                 IconButton(
                                     onClick = {
-                                        val newStatus = if (status.value == "play") "pause" else "play"
+                                        val newStatus = if (status.value == "Playing") "pause" else "play"
                                         handleAction(newStatus)
                                     },
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 ) {
-                                    if (status.value == "play") {
+                                    if (status.value == "Playing") {
                                         Icon(Icons.Default.Pause, contentDescription = "Pause")
                                     } else {
                                         Icon(Icons.Default.PlayArrow, contentDescription = "Play")
@@ -379,7 +385,7 @@ fun MediaControls(db: FirebaseDatabase) {
 //                    modifier = Modifier.size(100.dp)
 //                )
                                                 SpinningImage(
-                                                    status.value == "play",
+                                                    status.value == "Playing",
                                                     currentTrack.value,
                                                     size = 150.dp
                                                 )
@@ -406,12 +412,12 @@ fun MediaControls(db: FirebaseDatabase) {
                                                     IconButton(
                                                         onClick = {
                                                             val newStatus =
-                                                                if (status.value == "play") "pause" else "play"
+                                                                if (status.value == "Playing") "pause" else "play"
                                                             handleAction(newStatus)
                                                         },
                                                         modifier = Modifier.padding(horizontal = 8.dp)
                                                     ) {
-                                                        if (status.value == "play") {
+                                                        if (status.value == "Playing") {
                                                             Icon(
                                                                 Icons.Default.Pause,
                                                                 contentDescription = "Pause"
@@ -565,7 +571,7 @@ fun MediaControls(db: FirebaseDatabase) {
                                                                 ) {
                                                                 if (currentTrack.value.song == songList[index].song && deviceStatus.value == "online") {
 
-                                                                    MusicAnimation(status.value == "play")
+                                                                    MusicAnimation(status.value == "Playing")
 
                                                                 }
                                                             }
@@ -604,6 +610,7 @@ fun MediaControls(db: FirebaseDatabase) {
 
         }
         if(deviceStatus.value == "offline") {
+            sheetOpen = false
             MyDialog(onDismiss = { /*TODO*/ })
         }
 
