@@ -11,7 +11,9 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -102,7 +104,6 @@ fun MediaControls(db: FirebaseDatabase) {
     viewModel.currentTrack.observe(LocalContext.current as androidx.activity.ComponentActivity) { track ->
         Log.d("MediaControls current track123", "Current track: $track")
         songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
-
 
 
     }
@@ -259,7 +260,7 @@ fun MediaControls(db: FirebaseDatabase) {
             Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxHeight()
-        ){
+        ) {
             Scaffold(
 
 
@@ -320,8 +321,8 @@ fun MediaControls(db: FirebaseDatabase) {
 //
 //                        }
 //                    }
-                    SwipeableText()
 
+                    DraggableTextLowLevel(swipeRight = {nextSong()}, swipeLeft= { previousSong() }, currentTrack = currentTrack.value)
 
                 }
 
@@ -493,7 +494,8 @@ fun MediaControls(db: FirebaseDatabase) {
 
                         false -> {
                             Column(
-                                horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
                                     .fillMaxSize()
                             ) {
                                 Column(
@@ -579,7 +581,9 @@ fun MediaControls(db: FirebaseDatabase) {
                                                             ) {
                                                                 Text(
                                                                     text = "${songList[index].song} \n",
-                                                                    modifier = Modifier.align(Alignment.Start)
+                                                                    modifier = Modifier.align(
+                                                                        Alignment.Start
+                                                                    )
                                                                 )
                                                                 Text(text = "${songList[index].artist}")
                                                             }
@@ -633,17 +637,13 @@ fun MediaControls(db: FirebaseDatabase) {
             }
 
         }
-        if(deviceStatus.value == "offline") {
+        if (deviceStatus.value == "offline") {
             sheetOpen = false
             MyDialog(onDismiss = { /*TODO*/ })
         }
 
 
     }
-
-
-
-
 
 
 }
@@ -659,7 +659,7 @@ fun MyDialog(onDismiss: () -> Unit) {
     ) {
 
 
-            DeviceOfflineAnimation()
+        DeviceOfflineAnimation()
 
 
     }
@@ -782,7 +782,7 @@ fun DeviceOfflineAnimation() {
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
+    ) {
         Text(text = "Device stats is Offline")
         LottieAnimation(
             composition = composition,
@@ -798,74 +798,239 @@ fun DeviceOfflineAnimation() {
 
 }
 
+//
+//@Composable
+//private fun ScrollableSample(currentTrack: Song, playNext: () -> Unit) {
+//
+//    val listState = rememberLazyListState()
+//    val coroutineScope = rememberCoroutineScope()
+//    val targetIndex = remember { mutableStateOf(0) }
+//
+//
+//    fun swipeRight() {
+//        Log.i("scroll", "swipeRight: ${targetIndex.value + 1}")
+//        playNext()
+//    }
+//
+//    LaunchedEffect(key1 = targetIndex.value, block = {
+//        Log.i("LaunchedEffect", "LaunchedEffect ${targetIndex.value}")
+//        coroutineScope.launch {
+//            listState.animateScrollToItem(targetIndex.value)
+//        }
+//
+//
+//    })
+//    fun swipeLeft() = coroutineScope.launch {
+//
+//    }
+//
+//
+//
+//    LazyRow(
+//        Modifier
+//            .fillMaxWidth()
+//            .height(60.dp)
+//            .scrollable(
+//                orientation = Orientation.Horizontal,
+//                state = listState,
+//            )
+//            .background(Color.LightGray),
+//
+//        ) {
+//        items(10) {
+//            Box(
+//                modifier = Modifier
+//                    .fillParentMaxWidth()
+//                    .fillParentMaxHeight()
+//            ) {
+//                DraggableTextLowLevel(swipeRight = {
+//                    swipeRight()
+//                }, swipeLeft = {
+//                    swipeLeft()
+//                },
+//                )
+//            }
+//
+//
+//        }
+//    }
+//
+//}
 
 @Composable
-fun SwipeableText() {
-    val listState = rememberLazyListState()
-    val textList = listOf("Hello", "World", "Compose", "Android", "Kotlin")
-    val coroutineScope = rememberCoroutineScope()
-    val previousOffset = remember { mutableStateOf(0) }
+private fun DraggableTextLowLevel(
+    swipeRight: () -> Unit = {},
+    swipeLeft: () -> Unit = {},
+    currentTrack: Song
+) {
 
-  var currentIndex by remember { mutableStateOf(0) }
-
-
+    var offsetX by remember { mutableStateOf(0f) }
 
 
-    LazyRow(
-        state = listState,
+    Card(
         modifier = Modifier
-            .scrollable(
-                orientation = Orientation.Horizontal,
-                state = listState,
-                enabled = true,
-            )
-    ) {
-        items(textList) { text ->
-            Card(
-                modifier = Modifier
-                    .fillParentMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                backgroundColor = Color.White,
-            ) {
-                Log.i("listState", "offset: ${listState.firstVisibleItemScrollOffset}")
-
-                LaunchedEffect(key1 = listState.firstVisibleItemScrollOffset) {
-                    val offset = listState.firstVisibleItemScrollOffset
-
-                        Log.i("listState", "called. offset: ${offset} , previous: ${previousOffset.value}")
-                        val previous = previousOffset.value
-                        coroutineScope.launch {
-                            if (offset > 0   ) {
+            .fillMaxWidth()
+            .height(60.dp)
+            .background(Color.Blue)
+            .pointerInput(Unit) {
+                detectDragGestures { change, dragAmount ->
+                    change.consume()
+                    offsetX += dragAmount.x
+                    if (dragAmount.x > 0) {
+                        Log.i("Swipe", "Swiped right, offset : $offsetX")
+                        swipeRight()
+                    } else {
+                        // Swiped left'
+                        Log.i("Swipe", "Swiped left, offset : $offsetX")
+                        swipeLeft()
+                    }
 
 
-                                if((offset < 500) && (offset < previous))
-                                {
-                                    
-                                    Log.i("listState go back ", "go back. offset: ${listState.firstVisibleItemScrollOffset} , previous: ${previousOffset.value}")
-
-                                }
-
-                            }
-
-                        }
-
-                    previousOffset.value = offset
                 }
-
-
-
-                Text(
-                    text = text,
-                    modifier = Modifier.height(50.dp),
-                    style = TextStyle(color = Color.Black),
-                    textAlign = TextAlign.Center
-                )
             }
-        }
+
+
+    ) {
+        Text(
+            text = "${currentTrack.song}", textAlign = TextAlign.Center
+
+        )
+
     }
+
+
 }
 
+@Composable
+fun BottomTrackController(
+    trackName: String,
+    seekState: Float,
+    imageUrl: String,
+    nowPlayingClicked: () -> Unit,
+    artistName: String,
+    isPlaying: Boolean,
+    onChangePlayerClicked: () -> Unit,
+    hasLiked: Boolean,
+    onLikeClicked: () -> Unit
+) {
 
+    //Player
+    if (trackName.isNotEmpty()) {
+        Column(
+            Modifier
+                .height(1.dp)
+                .fillMaxWidth()
+                .background(Color.White)
+        ) {
+
+            Row(
+                Modifier
+                    .fillMaxHeight()
+                    .background(Color.White)
+                    .fillMaxWidth(seekState)
+            ) {
+
+            }
+        }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .background(Color.White)
+        ) {
+
+            Image(
+                painter = painterResource(id = R.drawable.ic_home),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(60.dp),
+            )
+
+            Column(
+                Modifier
+                    .padding(start = 10.dp)
+                    .align(Alignment.CenterVertically)
+                    .clickable {
+                        nowPlayingClicked()
+                    }
+                    .fillMaxWidth(0.7f)
+            ) {
+                Text(
+                    text = trackName,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    maxLines = 1
+                )
+                Text(
+                    text = artistName,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 13.sp
+                )
+            }
+            Box(
+                contentAlignment = Alignment.CenterEnd,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            ) {
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .width(150.dp)
+                        .padding(end = 10.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_home),
+                        contentDescription = "Cast",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable {
+                                onChangePlayerClicked()
+                            }
+
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.ic_home),
+                        contentDescription = "Like",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable {
+                                onLikeClicked()
+                            },
+
+                        )
+                    Image(
+                        painter =
+                        painterResource(id = R.drawable.ic_home),
+                        contentDescription = "Like",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clickable {
+                                if (isPlaying)
+                                    Log.i("BottomTrackController", "isPlaying: ${isPlaying}")
+                                else
+                                    Log.i("BottomTrackController", "isPlaying: ${isPlaying}")
+
+                            },
+
+                        )
+                }
+
+            }
+        }
+        Spacer(
+            modifier = Modifier
+                .height(2.dp)
+                .fillMaxWidth()
+                .background(Color.Black)
+        )
+
+    }
+}
 
 
 
