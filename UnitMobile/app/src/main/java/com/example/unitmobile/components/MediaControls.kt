@@ -79,8 +79,7 @@ fun MediaControls(db: FirebaseDatabase) {
     }
     viewModel.currentTrack.observe(LocalContext.current as androidx.activity.ComponentActivity) { track ->
         Log.d("MediaControls current track123", "Current track: $track")
-        songList.find { it.trackID == track["trackId"] }?.let { currentTrack.value = it }
-
+        songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
 
     }
 
@@ -93,7 +92,6 @@ fun MediaControls(db: FirebaseDatabase) {
             songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         val nextIndex = (currentIndex + 1) % songList.size
         Log.i("MediaControls", "Playing next song: $currentIndex => $nextIndex")
-        currentTrack.value = songList[nextIndex]
 
         val data = mapOf(
             "id" to UUID.randomUUID().toString(),
@@ -109,8 +107,6 @@ fun MediaControls(db: FirebaseDatabase) {
             songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         val previousIndex = if (currentIndex == 0) songList.size - 1 else currentIndex - 1
         Log.i("MediaControls", "Playing previous song: $currentIndex => $previousIndex")
-
-        currentTrack.value = songList[previousIndex]
 
         val data = mapOf(
             "id" to UUID.randomUUID().toString(),
@@ -261,7 +257,7 @@ fun MediaControls(db: FirebaseDatabase) {
                                 Box(modifier = Modifier.align(Alignment.CenterVertically)) {
                                     SpinningImage(status.value == "play", currentTrack.value, 50.dp)
                                 }
-                                IconButton(onClick = { handleAction("previous") }) {
+                                IconButton(onClick = { previousSong() }) {
                                     Icon(
                                         imageVector = Icons.Filled.SkipPrevious,
                                         contentDescription = "Previous song"
@@ -286,7 +282,7 @@ fun MediaControls(db: FirebaseDatabase) {
                                         contentDescription = "Stop song"
                                     )
                                 }
-                                IconButton(onClick = { handleAction("next") }) {
+                                IconButton(onClick = { nextSong() }) {
                                     Icon(
                                         imageVector = Icons.Filled.SkipNext,
                                         contentDescription = "Next song"
