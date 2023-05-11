@@ -13,6 +13,7 @@ import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -43,6 +44,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -60,6 +62,9 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.math.roundToInt
 
@@ -798,6 +803,13 @@ fun DeviceOfflineAnimation() {
 fun SwipeableText() {
     val listState = rememberLazyListState()
     val textList = listOf("Hello", "World", "Compose", "Android", "Kotlin")
+    val coroutineScope = rememberCoroutineScope()
+    val previousOffset = remember { mutableStateOf(0) }
+
+  var currentIndex by remember { mutableStateOf(0) }
+
+
+
 
     LazyRow(
         state = listState,
@@ -805,23 +817,54 @@ fun SwipeableText() {
             .scrollable(
                 orientation = Orientation.Horizontal,
                 state = listState,
-                enabled = true
+                enabled = true,
             )
     ) {
         items(textList) { text ->
-
-
-
-
-            Text(
-                text = text,
+            Card(
                 modifier = Modifier
                     .fillParentMaxWidth(),
-                textAlign = TextAlign.Center
-            )
+                shape = RoundedCornerShape(8.dp),
+                backgroundColor = Color.White,
+            ) {
+                Log.i("listState", "offset: ${listState.firstVisibleItemScrollOffset}")
+
+                LaunchedEffect(key1 = listState.firstVisibleItemScrollOffset) {
+                    val offset = listState.firstVisibleItemScrollOffset
+
+                        Log.i("listState", "called. offset: ${offset} , previous: ${previousOffset.value}")
+                        val previous = previousOffset.value
+                        coroutineScope.launch {
+                            if (offset > 0   ) {
+
+
+                                if((offset < 500) && (offset < previous))
+                                {
+                                    
+                                    Log.i("listState go back ", "go back. offset: ${listState.firstVisibleItemScrollOffset} , previous: ${previousOffset.value}")
+
+                                }
+
+                            }
+
+                        }
+
+                    previousOffset.value = offset
+                }
+
+
+
+                Text(
+                    text = text,
+                    modifier = Modifier.height(50.dp),
+                    style = TextStyle(color = Color.Black),
+                    textAlign = TextAlign.Center
+                )
+            }
         }
     }
 }
+
 
 
 
