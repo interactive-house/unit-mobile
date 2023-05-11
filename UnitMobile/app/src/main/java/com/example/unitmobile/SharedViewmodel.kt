@@ -18,14 +18,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.tasks.await
-import kotlin.math.log
 
 class SharedViewModel(application: Application) : AndroidViewModel(application) {
     private val viewModelJob = Job()
     private val db = Firebase.database("https://smarthome-3bb7b-default-rtdb.firebaseio.com/")
     private val uiScope = CoroutineScope(Dispatchers.Main + viewModelJob)
-    var currentStatus = MutableLiveData<String>()
-    var currentTrack = MutableLiveData<Song>()
+    var currentTrack = MutableLiveData<MutableMap<String, String>>()
     var songs = MutableLiveData<List<Song>>()
     var ttsPhrase = MutableLiveData<String>()
 
@@ -43,6 +41,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                     Log.i("SharedViewModel album", "AlbumDrawable: $albumDrawable")
                     var resID = getApplication<Application>().resources.getIdentifier(
                         albumDrawable, "drawable", getApplication<Application>().packageName
+
                     )
                     Log.i("SharedViewModel album res", "ResID: $resID")
                     val song = Song(
@@ -50,6 +49,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                         (songSnapshot.value as Map<*, *>)["artist"].toString().replace("[", "").replace("]", ""),
                         (songSnapshot.value as Map<*, *>)["trackId"].toString().replace("[", "").replace("]", ""),
                         resID
+
+
                     )
                     if (song != null) {
                         Log.i("SharedViewModel", "Song: $song")
@@ -57,6 +58,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                     }
                 }
                 songs.postValue(songsList)
+
             }
 
             override fun onCancelled(error: DatabaseError) {
@@ -67,30 +69,14 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
     }
     fun initCurrentTrack(){
-        val songListRef = db.getReference("simulatedDevices")
-            .child("playerState")
+        val songListRef = db.getReference("simulatedDevices").child("action")
         songListRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                var track = snapshot.child("currentTrack").value
+                Log.i("SharedViewModel current ", "Snapshot: $snapshot")
+                var TrackID = (snapshot.value as Map<*, *>)["trackId"].toString()
+                var status = (snapshot.value as Map<*, *>)["type"].toString()
+                currentTrack.postValue(mutableMapOf("trackId" to TrackID, "status" to status))
 
-                Log.i("SharedViewModel", "Track: $track")
-
-                var albumDrawable = (track as Map<*, *>)["track"].toString().trim().lowercase().replace(" ", "_").replace("[", "").replace("]", "")
-                Log.i("SharedViewModel album track", "AlbumDrawable: $albumDrawable")
-                var resID = getApplication<Application>().resources.getIdentifier(
-                    albumDrawable, "drawable", getApplication<Application>().packageName
-                )
-                Log.i("SharedViewModel album res track", "ResID: $resID")
-                val song = Song(
-                    track["track"].toString(),
-                    track["artist"].toString(),
-                    track["trackId"].toString(),
-                    resID
-                )
-                var status = snapshot.child("status").value.toString()
-
-                currentTrack.postValue(song)
-                currentStatus.postValue(status)
 
             }
 
