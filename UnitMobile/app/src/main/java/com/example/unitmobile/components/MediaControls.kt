@@ -531,6 +531,18 @@ fun MediaControls(db: FirebaseDatabase) {
                                                             modifier = Modifier.fillMaxWidth(),
                                                             horizontalArrangement = Arrangement.SpaceBetween
                                                         ) {
+
+
+                                                            if (songList[index].albumIMG != 0) {
+                                                                Image(
+                                                                    painter = painterResource(id = songList[index].albumIMG),
+                                                                    contentDescription = "Album Image",
+                                                                    contentScale = ContentScale.Crop,
+                                                                    modifier = Modifier
+                                                                        .size(40.dp)
+                                                                        .align(Alignment.CenterVertically)
+                                                                )
+                                                            }
                                                             Column(
                                                                 modifier = Modifier
                                                                     .weight(1f)
@@ -759,7 +771,4 @@ fun DeviceOfflineAnimation() {
 
 }
 
-@Composable
-fun BoxExample() {
 
-}
