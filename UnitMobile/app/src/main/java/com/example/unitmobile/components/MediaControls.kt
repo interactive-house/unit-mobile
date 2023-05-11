@@ -9,12 +9,14 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -313,7 +315,7 @@ fun MediaControls(db: FirebaseDatabase) {
 //
 //                        }
 //                    }
-                    DraggableRow()
+                    SwipeableText()
 
 
                 }
@@ -790,45 +792,36 @@ fun DeviceOfflineAnimation() {
 
 
 }
-@Composable
-fun DraggableRow() {
-    var dragOffset by remember { mutableStateOf(0f) }
 
-    Row(Modifier.fillMaxWidth()) {
-        DraggableText("Content 1", dragOffset) { delta ->
-            dragOffset += delta
-        }
-
-        DraggableText("Content 2", dragOffset) { delta ->
-            dragOffset += delta
-        }
-    }
-}
 
 @Composable
-fun DraggableText(text: String, dragOffset: Float, onDrag: (Float) -> Unit) {
-    val offsetX = remember { mutableStateOf(0f) }
-    val density = LocalDensity.current
+fun SwipeableText() {
+    val listState = rememberLazyListState()
+    val textList = listOf("Hello", "World", "Compose", "Android", "Kotlin")
 
-    val draggableModifier = Modifier.pointerInput(Unit) {
-        detectDragGestures { change, dragAmount ->
-            val dragDelta = with(density) { dragAmount.x / density.density }
-            onDrag(dragDelta)
-            if (change.positionChange() != Offset.Zero) change.consume()
-        }
-    }
-
-    Box(
-        Modifier
-            .background(Color.Red)
-            .width(200.dp)
-            .offset(x = (dragOffset + offsetX.value).dp, y = 0.dp)
-            .then(draggableModifier)
+    LazyRow(
+        state = listState,
+        modifier = Modifier
+            .scrollable(
+                orientation = Orientation.Horizontal,
+                state = listState,
+                enabled = true
+            )
     ) {
-        Text(text, Modifier.padding(16.dp), color = Color.White)
+        items(textList) { text ->
+
+
+
+
+            Text(
+                text = text,
+                modifier = Modifier
+                    .fillParentMaxWidth(),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
-
 
 
 
