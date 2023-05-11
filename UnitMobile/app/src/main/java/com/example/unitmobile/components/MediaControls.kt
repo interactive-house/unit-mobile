@@ -717,7 +717,7 @@ fun SpinningImage(spin: Boolean, currentTrack: Song, size: Dp) {
         rotationAnim.animateTo(
             targetValue = rotationAnim.value + 360f, // modify targetValue to be a multiple of 360
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 2000, easing = LinearEasing),
+                animation = tween(durationMillis = 5000, easing = LinearEasing),
                 repeatMode = RepeatMode.Restart
             )
         )

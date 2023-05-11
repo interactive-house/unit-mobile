@@ -108,27 +108,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         })
     }
 
-    fun initStatus() {
-        val songListRef = db.getReference("simulatedDevices")
-            .child("playerState").child("state")
-        songListRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
 
-
-                var status = snapshot.value.toString()
-                Log.i("SharedViewModel", "Statusweqqqqqqqqqqqqqq: $status")
-
-
-                currentStatus.value = status
-
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.i("SharedViewModel", "Error: ${error.message}")
-            }
-        })
-
-    }
 
 
 }
