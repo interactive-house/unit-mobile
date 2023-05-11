@@ -30,7 +30,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     var ttsPhrase = MutableLiveData<String>()
 
 
-
     fun initSongs() {
         val songListRef = db.getReference("simulatedDevices").child("songList")
         songListRef.addValueEventListener(object : ValueEventListener {
@@ -39,16 +38,21 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 val songsList = mutableListOf<Song>()
                 snapshot.children.forEach { songSnapshot ->
 
-                    var albumDrawable = (songSnapshot.value as Map<*, *>)["song"].toString().trim().lowercase().replace(" ", "_").replace("[", "").replace("]", "")
+                    var albumDrawable =
+                        (songSnapshot.value as Map<*, *>)["song"].toString().trim().lowercase()
+                            .replace(" ", "_").replace("[", "").replace("]", "")
                     Log.i("SharedViewModel album", "AlbumDrawable: $albumDrawable")
                     var resID = getApplication<Application>().resources.getIdentifier(
                         albumDrawable, "drawable", getApplication<Application>().packageName
                     )
                     Log.i("SharedViewModel album res", "ResID: $resID")
                     val song = Song(
-                        (songSnapshot.value as Map<*, *>)["song"].toString().replace("[", "").replace("]", ""),
-                        (songSnapshot.value as Map<*, *>)["artist"].toString().replace("[", "").replace("]", ""),
-                        (songSnapshot.value as Map<*, *>)["trackId"].toString().replace("[", "").replace("]", ""),
+                        (songSnapshot.value as Map<*, *>)["song"].toString().replace("[", "")
+                            .replace("]", ""),
+                        (songSnapshot.value as Map<*, *>)["artist"].toString().replace("[", "")
+                            .replace("]", ""),
+                        (songSnapshot.value as Map<*, *>)["trackId"].toString().replace("[", "")
+                            .replace("]", ""),
                         resID
                     )
                     if (song != null) {
@@ -66,7 +70,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
 
     }
-    fun initCurrentTrack(){
+
+    fun initCurrentTrack() {
         val songListRef = db.getReference("simulatedDevices")
             .child("playerState")
         songListRef.addValueEventListener(object : ValueEventListener {
@@ -75,7 +80,9 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
                 Log.i("SharedViewModel", "Track: $track")
 
-                var albumDrawable = (track as Map<*, *>)["track"].toString().trim().lowercase().replace(" ", "_").replace("[", "").replace("]", "")
+                var albumDrawable =
+                    (track as Map<*, *>)["track"].toString().trim().lowercase().replace(" ", "_")
+                        .replace("[", "").replace("]", "")
                 Log.i("SharedViewModel album track", "AlbumDrawable: $albumDrawable")
                 var resID = getApplication<Application>().resources.getIdentifier(
                     albumDrawable, "drawable", getApplication<Application>().packageName
@@ -91,7 +98,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 Log.i("SharedViewModel", "Statusweqqqqqqqqqqqqqq: $status")
 
                 currentTrack.postValue(song)
-                currentStatus.postValue(status)
+                currentStatus.value = status
 
             }
 
@@ -101,7 +108,27 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         })
     }
 
+    fun initStatus() {
+        val songListRef = db.getReference("simulatedDevices")
+            .child("playerState").child("state")
+        songListRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
 
+
+                var status = snapshot.value.toString()
+                Log.i("SharedViewModel", "Statusweqqqqqqqqqqqqqq: $status")
+
+
+                currentStatus.value = status
+
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.i("SharedViewModel", "Error: ${error.message}")
+            }
+        })
+
+    }
 
 
 }
