@@ -340,7 +340,7 @@ fun MediaControls(db: FirebaseDatabase) {
 
             }
         }
-//        Image(painterResource(id = R.drawable.chumbawumba), contentDescription = "Song image")
+
         Spacer(modifier = Modifier.height(8.dp))
         Card(modifier = Modifier.fillMaxSize()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
