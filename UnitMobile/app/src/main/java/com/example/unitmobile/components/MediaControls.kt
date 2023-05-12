@@ -872,49 +872,47 @@ private fun DraggableTextLowLevel(
         animationSpec = tween(durationMillis = 300)
     )
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp)
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragEnd = {
-                        isSwipeInProgress = false
-                        Log.i("Swipe", "Drag ended")
-                        if (offsetX > 0) {
-                            swipeRight()
-                        } else {
-                            swipeLeft()
-                        }
-                        offsetX = 0f
-                    },
-                    onDragStart = {
-                        Log.i("Swipe", "Drag started")
-                        isSwipeInProgress = true
-                    }
-                ) { change, dragAmount ->
-                    change.consume()
-                    if (offsetX + dragAmount.x in -60f..60f) {
-                        offsetX += dragAmount.x
-                        if (!isSwipeInProgress) {
-                            if (dragAmount.x > 0) {
-                                Log.i("Swipe", "Swiped right, offset : $offsetX")
-                                swipeRight()
-                            } else {
-                                // Swiped left'
-                                Log.i("Swipe", "Swiped left, offset : $offsetX")
-                                swipeLeft()
-                            }
-                        }
-                    }
-                    Log.i("Swipe", "Swiped right, offset : $offsetX")
 
-                }
-            }
-    ) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
+                .height(60.dp)
+                .background(MaterialTheme.colors.primary)
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragEnd = {
+                            isSwipeInProgress = false
+                            Log.i("Swipe", "Drag ended")
+                            if (offsetX > 0) {
+                                swipeRight()
+                            } else {
+                                swipeLeft()
+                            }
+                            offsetX = 0f
+                        },
+                        onDragStart = {
+                            Log.i("Swipe", "Drag started")
+                            isSwipeInProgress = true
+                        }
+                    ) { change, dragAmount ->
+                        change.consume()
+                        if (offsetX + dragAmount.x in -60f..60f) {
+                            offsetX += dragAmount.x
+                            if (!isSwipeInProgress) {
+                                if (dragAmount.x > 0) {
+                                    Log.i("Swipe", "Swiped right, offset : $offsetX")
+                                    swipeRight()
+                                } else {
+                                    // Swiped left'
+                                    Log.i("Swipe", "Swiped left, offset : $offsetX")
+                                    swipeLeft()
+                                }
+                            }
+                        }
+                        Log.i("Swipe", "Swiped right, offset : $offsetX")
+
+                    }
+                }
                 .offset(animatedOffsetX.dp, 0.dp)
                 .background(MaterialTheme.colors.primary)
         ) {
@@ -923,12 +921,12 @@ private fun DraggableTextLowLevel(
                     color = Color.White,
                     text = "${currentTrack.song}",
                     textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
+                    modifier = Modifier.align(Alignment.Center)
+
                 )
             }
         }
-    }
+
 }
 
 
