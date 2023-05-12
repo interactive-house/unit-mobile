@@ -8,6 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -40,10 +42,14 @@ import com.example.unitmobile.R
 import com.example.unitmobile.SharedViewModel
 import com.example.unitmobile.Song
 import com.example.unitmobile.SongSaver
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.launch
 import java.util.*
 
 @Composable
@@ -63,6 +69,8 @@ fun MediaControls(db: FirebaseDatabase) {
     val currentTrack = rememberSaveable(
         stateSaver = SongSaver()
     ) { mutableStateOf(Song("", "", "", 0)) }
+    val currentIndex = remember { mutableStateOf(0) }
+
 
     val statusRef = db.getReference("simulatedDevices").child("action")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
@@ -81,8 +89,11 @@ fun MediaControls(db: FirebaseDatabase) {
         Log.d("MediaControls current track123", "Current track: $track")
         if (track.trackID == "") {
             currentTrack.value = Song("", "", "", 0)
+            currentIndex.value = -1
         } else {
             songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
+            Log.i("MediaControls current track123", "Current index: ${songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })}")
+            currentIndex.value = songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         }
 
 
@@ -232,62 +243,80 @@ fun MediaControls(db: FirebaseDatabase) {
 
 
                 bottomBar = {
-                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online") {
-                        BottomAppBar(
-                            backgroundColor = MaterialTheme.colors.primary,
-                            contentColor = Color.White,
-
-                            cutoutShape = CircleShape,
-                            modifier = Modifier.clickable {
-                                sheetOpen = !sheetOpen
-
-                            }
-
-
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Box(modifier = Modifier.align(Alignment.CenterVertically)) {
-                                    SpinningImage(status.value == "Playing", currentTrack.value, 50.dp)
-                                }
-                                IconButton(onClick = { previousSong() }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.SkipPrevious,
-                                        contentDescription = "Previous song"
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        val newStatus = if (status.value == "Playing") "pause" else "play"
-                                        handleAction(newStatus)
-                                    },
-                                    modifier = Modifier.padding(horizontal = 8.dp)
-                                ) {
-                                    if (status.value == "Playing") {
-                                        Icon(Icons.Default.Pause, contentDescription = "Pause")
-                                    } else {
-                                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-                                    }
-                                }
-                                IconButton(onClick = { handleAction("stop") }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Stop,
-                                        contentDescription = "Stop song"
-                                    )
-                                }
-                                IconButton(onClick = { nextSong() }) {
-                                    Icon(
-                                        imageVector = Icons.Filled.SkipNext,
-                                        contentDescription = "Next song"
-                                    )
-                                }
-                            }
-
-                        }
-                    }
+//                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online") {
+//                        BottomAppBar(
+//                            backgroundColor = MaterialTheme.colors.primary,
+//                            contentColor = Color.White,
+//
+//                            cutoutShape = CircleShape,
+//                            modifier = Modifier.clickable {
+//                                sheetOpen = !sheetOpen
+//
+//                            }
+//
+//
+//                        ) {
+//                            Row(
+//                                modifier = Modifier.fillMaxWidth(),
+//                                horizontalArrangement = Arrangement.Center,
+//                                verticalAlignment = Alignment.CenterVertically
+//                            ) {
+//                                Box(modifier = Modifier.align(Alignment.CenterVertically)) {
+//                                    SpinningImage(status.value == "Playing", currentTrack.value, 50.dp)
+//                                }
+//                                IconButton(onClick = { previousSong() }) {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.SkipPrevious,
+//                                        contentDescription = "Previous song"
+//                                    )
+//                                }
+//                                IconButton(
+//                                    onClick = {
+//                                        val newStatus = if (status.value == "Playing") "pause" else "play"
+//                                        handleAction(newStatus)
+//                                    },
+//                                    modifier = Modifier.padding(horizontal = 8.dp)
+//                                ) {
+//                                    if (status.value == "Playing") {
+//                                        Icon(Icons.Default.Pause, contentDescription = "Pause")
+//                                    } else {
+//                                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+//                                    }
+//                                }
+//                                IconButton(onClick = { handleAction("stop") }) {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.Stop,
+//                                        contentDescription = "Stop song"
+//                                    )
+//                                }
+//                                IconButton(onClick = { nextSong() }) {
+//                                    Icon(
+//                                        imageVector = Icons.Filled.SkipNext,
+//                                        contentDescription = "Next song"
+//                                    )
+//                                }
+//                            }
+//
+//                        }
+//                    }
+//                    DraggableTextLowLevel(
+//                        swipeRight = {
+//                            previousSong()
+//                        },
+//                        swipeLeft = {
+//                            nextSong()
+//                        },
+//                        currentTrack = currentTrack.value,
+//                        songList = songList,
+//                        trackIndex = currentIndex.value ,
+//
+//
+//
+//
+//
+//
+//                    )
+                    HorizontalPagerScreen()
 
                 }
 
@@ -763,5 +792,179 @@ fun DeviceOfflineAnimation() {
 
 
 }
+
+
+@Composable
+private fun DraggableTextLowLevel(
+    swipeRight: () -> Unit = {},
+    swipeLeft: () -> Unit = {},
+    currentTrack: Song,
+    songList: List<Song>,
+    trackIndex: Int,
+) {
+    var offsetX by remember { mutableStateOf(0f) }
+    var nextSongOffset by remember { mutableStateOf(0f) }
+    var isSwipeInProgress by remember { mutableStateOf(false) }
+    var nextSong by remember { mutableStateOf(Song("", "", "", 0 )) }
+    var previousSong by remember { mutableStateOf(Song("", "", "", 0 )) }
+
+    Log.i("current: ", trackIndex.toString())
+    if(trackIndex != -1 && songList.isNotEmpty()) {
+        nextSong = songList[(trackIndex + 1) % songList.size]
+        previousSong = songList[if (trackIndex == 0) songList.size - 1 else trackIndex - 1]
+    }
+
+
+
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .background(MaterialTheme.colors.primary)
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragEnd = {
+                        isSwipeInProgress = false
+                        if (offsetX > 0) {
+                            swipeRight() // previous song
+
+                        } else {
+                            swipeLeft() // next song
+
+                        }
+                        offsetX = 0f
+                    },
+                    onDragStart = {
+                        isSwipeInProgress = true
+                    }
+                ) { change, dragAmount ->
+                    change.consume()
+                    if (offsetX + dragAmount.x in -100f..100f) {
+                        offsetX += dragAmount.x
+
+                    }
+                }
+            }
+            .offset(offsetX.dp, 0.dp)
+            .background(MaterialTheme.colors.primary)
+    ) {
+        val nextTextAlpha = if(offsetX < 0)( offsetX / -100f)else offsetX / 100f
+        val currentTextAlpha = if (offsetX < 0) {
+            1 - (offsetX / -100f)
+        } else {
+            1 - (offsetX / 100f)
+        }
+        nextSongOffset = -offsetX
+//        val currentTextAlpha = 1 - (offsetX / 100f).coerceIn(-1f, 1f)
+
+        Log.i("offsetX", "DraggableTextLowLevel: $offsetX")
+        Log.i("offsetX", "Alpha: $currentTextAlpha")
+
+
+        Row(
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+                if(offsetX < 0 ){
+                    Text(
+                        color = Color.White.copy(alpha = currentTextAlpha),
+                        text = "${currentTrack.song}",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        color = Color.White.copy(alpha = nextTextAlpha),
+
+                        text = "${nextSong.song}",
+                        textAlign = TextAlign.Right,
+                        modifier = Modifier.weight(1f)
+                    )
+                }else if(offsetX > 0){
+                    Text(
+                        color = Color.White.copy(alpha = nextTextAlpha),
+
+
+                        text = "${previousSong.song}",
+                        textAlign = TextAlign.Left,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        color = Color.White.copy(alpha = currentTextAlpha),
+                        text = "${currentTrack.song}",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            else{
+                    Text(
+                        color = Color.White.copy(alpha = currentTextAlpha),
+                        text = "${currentTrack.song}",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
+                    )
+            }
+
+
+
+
+        }
+    }
+}
+
+
+fun createItems() = listOf(
+    HorizontalPagerContent(title = "Title1", subtitle = "Subtitle1", description = "Description1"),
+    HorizontalPagerContent(title = "Title2", subtitle = "Subtitle2", description = "Description2"),
+    HorizontalPagerContent(title = "Title3", subtitle = "Subtitle3", description = "Description3"),
+    HorizontalPagerContent(title = "Title4", subtitle = "Subtitle4", description = "Description4"),
+    HorizontalPagerContent(title = "Title5", subtitle = "Subtitle5", description = "Description5")
+)
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun HorizontalPagerScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(100.dp)
+    ) {
+        val items = createItems()
+        val pagerState = rememberPagerState()
+
+        HorizontalPager(
+            count = items.size,
+            state = pagerState,
+            modifier = Modifier.weight(1f)
+        ) { currentPage ->
+            Row(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Text(
+                    text = items[currentPage].title,
+                    style = MaterialTheme.typography.h2
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = items[currentPage].subtitle,
+                    style = MaterialTheme.typography.h4
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+                Text(
+                    text = items[currentPage].description,
+                    style = MaterialTheme.typography.body1
+                )
+            }
+        }
+
+        val coroutineScope = rememberCoroutineScope()
+
+    }
+}
+
+data class HorizontalPagerContent(
+    val title: String,
+    val subtitle: String,
+    val description: String
+)
 
 
