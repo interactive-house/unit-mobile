@@ -876,11 +876,6 @@ private fun DraggableTextLowLevel(
     )
 
 
-    val currentIndex = remember {
-        val index = songList.indexOfFirst { it.trackID == currentTrack.trackID }
-        mutableStateOf(if (index >= 0) index else 0)
-    }
-
 
 
     Box(
@@ -896,6 +891,7 @@ private fun DraggableTextLowLevel(
                             swipeRight() // previous song
                         } else {
                             swipeLeft() // next song
+
                         }
                         offsetX = 0f
                     },
@@ -907,13 +903,6 @@ private fun DraggableTextLowLevel(
                     if (offsetX + dragAmount.x in -100f..100f) {
                         offsetX += dragAmount.x
 
-//                        if (!isSwipeInProgress) {
-//                            if (dragAmount.x > 0) {
-//                                swipeRight()
-//                            } else {
-//                                swipeLeft()
-//                            }
-//                        }
                     }
                 }
             }
@@ -932,6 +921,7 @@ private fun DraggableTextLowLevel(
         Log.i("offsetX", "DraggableTextLowLevel: $offsetX")
         Log.i("offsetX", "Alpha: $currentTextAlpha")
 
+
         Row(
             modifier = Modifier.align(Alignment.Center)
         ) {
@@ -944,14 +934,17 @@ private fun DraggableTextLowLevel(
                     )
                     Text(
                         color = Color.White.copy(alpha = nextTextAlpha),
-                        text = "${songList[currentIndex.value + 1].song}",
+
+                        text = "${songList[(songList.indexOfFirst { it.trackID == currentTrack.trackID } + 1) % songList.size].song}",
                         textAlign = TextAlign.Right,
                         modifier = Modifier.weight(1f)
                     )
                 }else if(offsetX > 0){
                     Text(
                         color = Color.White.copy(alpha = nextTextAlpha),
-                        text = "${songList[currentIndex.value - 1].song}",
+
+
+                        text = "${songList[if (songList.indexOfFirst { it.trackID == currentTrack.trackID } == 0) songList.size - 1 else songList.indexOfFirst { it.trackID == currentTrack.trackID } - 1].song}",
                         textAlign = TextAlign.Left,
                         modifier = Modifier.weight(1f)
                     )
