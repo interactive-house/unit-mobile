@@ -17,9 +17,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
@@ -65,6 +68,8 @@ fun TextFieldWithToggle(
 @Composable
 fun BottomTrackController(
     currentTrack: Song,
+    status: String,
+    handleAction : (String) -> Unit
 ) {
     Log.i("BottomTrackController", "currentTrack: $currentTrack")
     val song = remember { mutableStateOf(currentTrack) }
@@ -75,7 +80,7 @@ fun BottomTrackController(
             modifier = Modifier
                 .height(1.dp)
                 .fillMaxWidth()
-                .background(Color.Gray)
+                .background(MaterialTheme.colors.primary)
         ) {
 
             Row(
@@ -116,7 +121,7 @@ fun BottomTrackController(
                 )
                 Text(
                     text = song.value.artist,
-                    color = Color.Gray,
+                    color = Color.White,
                     fontWeight = FontWeight.Normal,
                     fontSize = 13.sp
                 )
@@ -134,26 +139,20 @@ fun BottomTrackController(
                         .width(150.dp)
                         .padding(end = 10.dp)
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.door_closed),
-                        contentDescription = "Cast",
-                        modifier = Modifier
-                            .size(32.dp)
-                          ,
-                        colorFilter = ColorFilter.tint(Color.Gray)
-                    )
-                    Image(
-                        painter = painterResource(id = R.drawable.lamp_on),
-                        contentDescription = "Like",
-                        modifier = Modifier.size(32.dp),)
 
-                    Image(
-                        painter = painterResource(id = R.drawable.info_icon),
-                        contentDescription = "Like",
-                        modifier = Modifier
-                            .size(32.dp),
-                        colorFilter = ColorFilter.tint(Color.White),
-                    )
+                    IconButton(
+                                    onClick = {
+                                        val newStatus = if (status == "Playing") "pause" else "play"
+                                        handleAction(newStatus)
+                                    },
+                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                ) {
+                                    if (status == "Playing") {
+                                        Icon(Icons.Default.Pause, contentDescription = "Pause")
+                                    } else {
+                                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                                    }
+                                }
                 }
 
             }

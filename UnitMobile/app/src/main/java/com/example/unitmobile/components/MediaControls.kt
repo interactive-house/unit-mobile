@@ -2,6 +2,7 @@ package com.example.unitmobile.components
 
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -88,12 +89,13 @@ fun MediaControls(db: FirebaseDatabase) {
             currentIndex.value = -1
         } else {
             songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
-            Log.i("MediaControls current track123", "Current index: ${songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })}")
-            currentIndex.value = songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
+            Log.i(
+                "MediaControls current track123",
+                "Current index: ${songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })}"
+            )
+            currentIndex.value =
+                songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         }
-
-
-
 
 
     }
@@ -234,7 +236,7 @@ fun MediaControls(db: FirebaseDatabase) {
             Modifier
                 .align(Alignment.TopCenter)
                 .fillMaxHeight()
-        ){
+        ) {
             Scaffold(
 
 
@@ -312,10 +314,24 @@ fun MediaControls(db: FirebaseDatabase) {
 //
 //
 //                    )
-                    HorizontalPagerScreen(status.value, songList, playSong = { song ->
-                        playSong(song)
-                    })
+//                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online")  {
+                        HorizontalPagerScreen(
+                            status.value, songList,
+                            playSong = { song ->
+                                playSong(song)
+                            },
+                            handleAction = { action ->
+                                handleAction(action)
+                            },
+                            openSheet = {
+                                sheetOpen = true
+                            },
+                            currentIndex = currentIndex.value,
 
+
+                            )
+
+//                    }
                 }
 
             ) {
@@ -486,7 +502,8 @@ fun MediaControls(db: FirebaseDatabase) {
 
                         false -> {
                             Column(
-                                horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
                                     .fillMaxSize()
                             ) {
                                 Column(
@@ -572,7 +589,9 @@ fun MediaControls(db: FirebaseDatabase) {
                                                             ) {
                                                                 Text(
                                                                     text = "${songList[index].song} \n",
-                                                                    modifier = Modifier.align(Alignment.Start)
+                                                                    modifier = Modifier.align(
+                                                                        Alignment.Start
+                                                                    )
                                                                 )
                                                                 Text(text = "${songList[index].artist}")
                                                             }
@@ -626,17 +645,13 @@ fun MediaControls(db: FirebaseDatabase) {
             }
 
         }
-        if(deviceStatus.value == "offline") {
+        if (deviceStatus.value == "offline") {
             sheetOpen = false
             MyDialog(onDismiss = { /*TODO*/ })
         }
 
 
     }
-
-
-
-
 
 
 }
@@ -652,7 +667,7 @@ fun MyDialog(onDismiss: () -> Unit) {
     ) {
 
 
-            DeviceOfflineAnimation()
+        DeviceOfflineAnimation()
 
 
     }
@@ -775,7 +790,7 @@ fun DeviceOfflineAnimation() {
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
-    ){
+    ) {
         Text(text = "Device stats is Offline")
         LottieAnimation(
             composition = composition,
@@ -792,139 +807,26 @@ fun DeviceOfflineAnimation() {
 }
 
 
-@Composable
-private fun DraggableTextLowLevel(
-    swipeRight: () -> Unit = {},
-    swipeLeft: () -> Unit = {},
-    currentTrack: Song,
-    songList: List<Song>,
-    trackIndex: Int,
-) {
-    var offsetX by remember { mutableStateOf(0f) }
-    var nextSongOffset by remember { mutableStateOf(0f) }
-    var isSwipeInProgress by remember { mutableStateOf(false) }
-    var nextSong by remember { mutableStateOf(Song("", "", "", 0 )) }
-    var previousSong by remember { mutableStateOf(Song("", "", "", 0 )) }
-
-    Log.i("current: ", trackIndex.toString())
-    if(trackIndex != -1 && songList.isNotEmpty()) {
-        nextSong = songList[(trackIndex + 1) % songList.size]
-        previousSong = songList[if (trackIndex == 0) songList.size - 1 else trackIndex - 1]
-    }
-
-
-
-
-
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(60.dp)
-            .background(MaterialTheme.colors.primary)
-            .pointerInput(Unit) {
-                detectDragGestures(
-                    onDragEnd = {
-                        isSwipeInProgress = false
-                        if (offsetX > 0) {
-                            swipeRight() // previous song
-
-                        } else {
-                            swipeLeft() // next song
-
-                        }
-                        offsetX = 0f
-                    },
-                    onDragStart = {
-                        isSwipeInProgress = true
-                    }
-                ) { change, dragAmount ->
-                    change.consume()
-                    if (offsetX + dragAmount.x in -100f..100f) {
-                        offsetX += dragAmount.x
-
-                    }
-                }
-            }
-            .offset(offsetX.dp, 0.dp)
-            .background(MaterialTheme.colors.primary)
-    ) {
-        val nextTextAlpha = if(offsetX < 0)( offsetX / -100f)else offsetX / 100f
-        val currentTextAlpha = if (offsetX < 0) {
-            1 - (offsetX / -100f)
-        } else {
-            1 - (offsetX / 100f)
-        }
-        nextSongOffset = -offsetX
-//        val currentTextAlpha = 1 - (offsetX / 100f).coerceIn(-1f, 1f)
-
-        Log.i("offsetX", "DraggableTextLowLevel: $offsetX")
-        Log.i("offsetX", "Alpha: $currentTextAlpha")
-
-
-        Row(
-            modifier = Modifier.align(Alignment.Center)
-        ) {
-                if(offsetX < 0 ){
-                    Text(
-                        color = Color.White.copy(alpha = currentTextAlpha),
-                        text = "${currentTrack.song}",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        color = Color.White.copy(alpha = nextTextAlpha),
-
-                        text = "${nextSong.song}",
-                        textAlign = TextAlign.Right,
-                        modifier = Modifier.weight(1f)
-                    )
-                }else if(offsetX > 0){
-                    Text(
-                        color = Color.White.copy(alpha = nextTextAlpha),
-
-
-                        text = "${previousSong.song}",
-                        textAlign = TextAlign.Left,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        color = Color.White.copy(alpha = currentTextAlpha),
-                        text = "${currentTrack.song}",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            else{
-                    Text(
-                        color = Color.White.copy(alpha = currentTextAlpha),
-                        text = "${currentTrack.song}",
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f)
-                    )
-            }
-
-
-
-
-        }
-    }
-}
-
-
-fun createItems() = listOf(
-    HorizontalPagerContent(title = "Title1", subtitle = "Subtitle1", description = "Description1"),
-    HorizontalPagerContent(title = "Title2", subtitle = "Subtitle2", description = "Description2"),
-    HorizontalPagerContent(title = "Title3", subtitle = "Subtitle3", description = "Description3"),
-    HorizontalPagerContent(title = "Title4", subtitle = "Subtitle4", description = "Description4"),
-    HorizontalPagerContent(title = "Title5", subtitle = "Subtitle5", description = "Description5")
-)
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun HorizontalPagerScreen(status: String, songList: List<Song>, playSong: (Song) -> Unit) {
+fun HorizontalPagerScreen(
+    status: String,
+    songList: List<Song>,
+    playSong: (Song) -> Unit,
+    handleAction: (String) -> Unit,
+    openSheet: () -> Unit,
+    currentIndex: Int
+
+) {
+
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
+            .clickable {
+                openSheet()
+            }
     ) {
         val pagerState = rememberPagerState(
             // Set the initial page to the middle index if available
@@ -938,24 +840,28 @@ fun HorizontalPagerScreen(status: String, songList: List<Song>, playSong: (Song)
         ) { currentPage ->
             // Calculate the actual index by taking modulo with the songList size
             val index = currentPage % songList.size
-            BottomTrackController(songList[index])
+
+                BottomTrackController(songList[index], status, handleAction)
+
+
         }
 
         LaunchedEffect(pagerState.currentPage) {
             val index = pagerState.currentPage % songList.size
+
             val currentSong = songList[index]
+
             if (status == "Playing") {
                 playSong(currentSong)
             }
             Log.i("CircularHorizontalPagerScreen", "status: $status")
             // Additional logic...
         }
+        LaunchedEffect(currentIndex) {
+            val index = pagerState.currentPage % songList.size
+            pagerState.animateScrollToPage(currentIndex)
+        }
     }
 }
 
-data class HorizontalPagerContent(
-    val title: String,
-    val subtitle: String,
-    val description: String
-)
 
