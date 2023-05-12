@@ -19,6 +19,7 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -82,7 +83,6 @@ fun MediaControls(db: FirebaseDatabase) {
     )[SharedViewModel::class.java]
     var songList: List<Song> = remember { mutableStateListOf<Song>() }
     var sheetOpen by remember { mutableStateOf(false) }
-
     val context = LocalContext.current
     val deviceStatus = rememberSaveable { mutableStateOf("No device") }
     val status = rememberSaveable { mutableStateOf("No status") }
@@ -106,6 +106,7 @@ fun MediaControls(db: FirebaseDatabase) {
     viewModel.currentTrack.observe(LocalContext.current as androidx.activity.ComponentActivity) { track ->
         Log.d("MediaControls current track123", "Current track: $track")
         songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
+
 
 
     }
@@ -324,7 +325,7 @@ fun MediaControls(db: FirebaseDatabase) {
 //                        }
 //                    }
 
-                    DraggableTextLowLevel(swipeRight = {previousSong()}, swipeLeft= { nextSong() }, currentTrack = currentTrack.value)
+                    DraggableTextLowLevel(swipeRight = {previousSong()}, swipeLeft= { nextSong() }, currentTrack = currentTrack.value, songList = songList)
 
                 }
 
@@ -863,9 +864,11 @@ fun DeviceOfflineAnimation() {
 private fun DraggableTextLowLevel(
     swipeRight: () -> Unit = {},
     swipeLeft: () -> Unit = {},
-    currentTrack: Song
+    currentTrack: Song,
+    songList: List<Song>,
 ) {
     var offsetX by remember { mutableStateOf(0f) }
+    var nextSongOffset by remember { mutableStateOf(0f) }
     var isSwipeInProgress by remember { mutableStateOf(false) }
     val animatedOffsetX by animateFloatAsState(
         targetValue = offsetX,
@@ -873,193 +876,109 @@ private fun DraggableTextLowLevel(
     )
 
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .background(MaterialTheme.colors.primary)
-                .pointerInput(Unit) {
-                    detectDragGestures(
-                        onDragEnd = {
-                            isSwipeInProgress = false
-                            Log.i("Swipe", "Drag ended")
-                            if (offsetX > 0) {
-                                swipeRight()
-                            } else {
-                                swipeLeft()
-                            }
-                            offsetX = 0f
-                        },
-                        onDragStart = {
-                            Log.i("Swipe", "Drag started")
-                            isSwipeInProgress = true
-                        }
-                    ) { change, dragAmount ->
-                        change.consume()
-                        if (offsetX + dragAmount.x in -60f..60f) {
-                            offsetX += dragAmount.x
-                            if (!isSwipeInProgress) {
-                                if (dragAmount.x > 0) {
-                                    Log.i("Swipe", "Swiped right, offset : $offsetX")
-                                    swipeRight()
-                                } else {
-                                    // Swiped left'
-                                    Log.i("Swipe", "Swiped left, offset : $offsetX")
-                                    swipeLeft()
-                                }
-                            }
-                        }
-                        Log.i("Swipe", "Swiped right, offset : $offsetX")
+    val currentIndex = remember {
+        val index = songList.indexOfFirst { it.trackID == currentTrack.trackID }
+        mutableStateOf(if (index >= 0) index else 0)
+    }
 
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(60.dp)
+            .background(MaterialTheme.colors.primary)
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragEnd = {
+                        isSwipeInProgress = false
+                        if (offsetX > 0) {
+                            swipeRight() // previous song
+                        } else {
+                            swipeLeft() // next song
+                        }
+                        offsetX = 0f
+                    },
+                    onDragStart = {
+                        isSwipeInProgress = true
+                    }
+                ) { change, dragAmount ->
+                    change.consume()
+                    if (offsetX + dragAmount.x in -100f..100f) {
+                        offsetX += dragAmount.x
+
+//                        if (!isSwipeInProgress) {
+//                            if (dragAmount.x > 0) {
+//                                swipeRight()
+//                            } else {
+//                                swipeLeft()
+//                            }
+//                        }
                     }
                 }
-                .offset(animatedOffsetX.dp, 0.dp)
-                .background(MaterialTheme.colors.primary)
-        ) {
-            if (!isSwipeInProgress) {
-                Text(
-                    color = Color.White,
-                    text = "${currentTrack.song}",
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.align(Alignment.Center)
-
-                )
             }
+            .offset(offsetX.dp, 0.dp)
+            .background(MaterialTheme.colors.primary)
+    ) {
+        val nextTextAlpha = if(offsetX < 0)( offsetX / -100f)else offsetX / 100f
+        val currentTextAlpha = if (offsetX < 0) {
+            1 - (offsetX / -100f)
+        } else {
+            1 - (offsetX / 100f)
         }
+        nextSongOffset = -offsetX
+//        val currentTextAlpha = 1 - (offsetX / 100f).coerceIn(-1f, 1f)
 
-}
+        Log.i("offsetX", "DraggableTextLowLevel: $offsetX")
+        Log.i("offsetX", "Alpha: $currentTextAlpha")
 
-
-@Composable
-fun BottomTrackController(
-    trackName: String,
-    seekState: Float,
-    imageUrl: String,
-    nowPlayingClicked: () -> Unit,
-    artistName: String,
-    isPlaying: Boolean,
-    onChangePlayerClicked: () -> Unit,
-    hasLiked: Boolean,
-    onLikeClicked: () -> Unit
-) {
-
-    //Player
-    if (trackName.isNotEmpty()) {
-        Column(
-            Modifier
-                .height(1.dp)
-                .fillMaxWidth()
-                .background(Color.White)
-        ) {
-
-            Row(
-                Modifier
-                    .fillMaxHeight()
-                    .background(Color.White)
-                    .fillMaxWidth(seekState)
-            ) {
-
-            }
-        }
         Row(
-            Modifier
-                .fillMaxWidth()
-                .height(60.dp)
-                .background(Color.White)
+            modifier = Modifier.align(Alignment.Center)
         ) {
-
-            Image(
-                painter = painterResource(id = R.drawable.ic_home),
-                contentDescription = null,
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(60.dp),
-            )
-
-            Column(
-                Modifier
-                    .padding(start = 10.dp)
-                    .align(Alignment.CenterVertically)
-                    .clickable {
-                        nowPlayingClicked()
-                    }
-                    .fillMaxWidth(0.7f)
-            ) {
-                Text(
-                    text = trackName,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    maxLines = 1
-                )
-                Text(
-                    text = artistName,
-                    color = Color.Gray,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 13.sp
-                )
-            }
-            Box(
-                contentAlignment = Alignment.CenterEnd,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-            ) {
-
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    modifier = Modifier
-                        .width(150.dp)
-                        .padding(end = 10.dp)
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_home),
-                        contentDescription = "Cast",
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clickable {
-                                onChangePlayerClicked()
-                            }
-
+                if(offsetX < 0 ){
+                    Text(
+                        color = Color.White.copy(alpha = currentTextAlpha),
+                        text = "${currentTrack.song}",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
                     )
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_home),
-                        contentDescription = "Like",
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clickable {
-                                onLikeClicked()
-                            },
-
-                        )
-                    Image(
-                        painter =
-                        painterResource(id = R.drawable.ic_home),
-                        contentDescription = "Like",
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clickable {
-                                if (isPlaying)
-                                    Log.i("BottomTrackController", "isPlaying: ${isPlaying}")
-                                else
-                                    Log.i("BottomTrackController", "isPlaying: ${isPlaying}")
-
-                            },
-
-                        )
+                    Text(
+                        color = Color.White.copy(alpha = nextTextAlpha),
+                        text = "${songList[currentIndex.value + 1].song}",
+                        textAlign = TextAlign.Right,
+                        modifier = Modifier.weight(1f)
+                    )
+                }else if(offsetX > 0){
+                    Text(
+                        color = Color.White.copy(alpha = nextTextAlpha),
+                        text = "${songList[currentIndex.value - 1].song}",
+                        textAlign = TextAlign.Left,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        color = Color.White.copy(alpha = currentTextAlpha),
+                        text = "${currentTrack.song}",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
+                    )
                 }
-
+            else{
+                    Text(
+                        color = Color.White.copy(alpha = currentTextAlpha),
+                        text = "${currentTrack.song}",
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
+                    )
             }
-        }
-        Spacer(
-            modifier = Modifier
-                .height(2.dp)
-                .fillMaxWidth()
-                .background(Color.Black)
-        )
 
+
+
+
+        }
     }
 }
+
+
 
 
 
