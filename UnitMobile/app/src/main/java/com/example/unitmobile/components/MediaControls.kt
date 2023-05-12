@@ -865,7 +865,6 @@ private fun DraggableTextLowLevel(
     swipeLeft: () -> Unit = {},
     currentTrack: Song
 ) {
-
     var offsetX by remember { mutableStateOf(0f) }
     var isSwipeInProgress by remember { mutableStateOf(false) }
     val animatedOffsetX by animateFloatAsState(
@@ -873,74 +872,65 @@ private fun DraggableTextLowLevel(
         animationSpec = tween(durationMillis = 300)
     )
 
-
-
     Card(
-        contentColor = MaterialTheme.colors.primary,
-
         modifier = Modifier
             .fillMaxWidth()
             .height(60.dp)
-//            .offset(x =animatedOffsetX.dp, y = 0.dp)
             .pointerInput(Unit) {
-                detectDragGestures(onDragEnd = {
-                    isSwipeInProgress = false
-                    Log.i("Swipe", "Drag ended")
-                    if (offsetX > 0) {
-                        swipeRight()
-                    } else {
-                        swipeLeft()
-                    }
-                    offsetX = 0f
-                },
+                detectDragGestures(
+                    onDragEnd = {
+                        isSwipeInProgress = false
+                        Log.i("Swipe", "Drag ended")
+                        if (offsetX > 0) {
+                            swipeRight()
+                        } else {
+                            swipeLeft()
+                        }
+                        offsetX = 0f
+                    },
                     onDragStart = {
                         Log.i("Swipe", "Drag started")
                         isSwipeInProgress = true
-                    },
-
+                    }
                 ) { change, dragAmount ->
                     change.consume()
-                    offsetX += dragAmount.x
-                    if (!isSwipeInProgress) {
-                        if (dragAmount.x > 0) {
-                            Log.i("Swipe", "Swiped right, offset : $offsetX")
-                            swipeRight()
-                        } else {
-                            // Swiped left'
-                            Log.i("Swipe", "Swiped left, offset : $offsetX")
-                            swipeLeft()
+                    if (offsetX + dragAmount.x in -60f..60f) {
+                        offsetX += dragAmount.x
+                        if (!isSwipeInProgress) {
+                            if (dragAmount.x > 0) {
+                                Log.i("Swipe", "Swiped right, offset : $offsetX")
+                                swipeRight()
+                            } else {
+                                // Swiped left'
+                                Log.i("Swipe", "Swiped left, offset : $offsetX")
+                                swipeLeft()
+                            }
                         }
-
                     }
-
-
-
+                    Log.i("Swipe", "Swiped right, offset : $offsetX")
 
                 }
             }
-
-
     ) {
-        AnimatedVisibility(
-            visible = !isSwipeInProgress,
-            enter = fadeIn(),
-            exit = fadeOut()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(animatedOffsetX.dp, 0.dp)
+                .background(MaterialTheme.colors.primary)
         ) {
-            Text(
-                color = Color.White,
-                text = "${currentTrack.song}",
-                textAlign = TextAlign.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                   .background(MaterialTheme.colors.primary)
-                    .offset(animatedOffsetX.dp, 0.dp)
-            )
+            if (!isSwipeInProgress) {
+                Text(
+                    color = Color.White,
+                    text = "${currentTrack.song}",
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                )
+            }
         }
-
     }
-
-
 }
+
 
 @Composable
 fun BottomTrackController(
