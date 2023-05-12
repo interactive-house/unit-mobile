@@ -6,7 +6,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -314,7 +317,7 @@ fun MediaControls(db: FirebaseDatabase) {
 //
 //
 //                    )
-//                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online")  {
+                   AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online")  {
                         HorizontalPagerScreen(
                             status.value, songList,
                             playSong = { song ->
@@ -327,11 +330,12 @@ fun MediaControls(db: FirebaseDatabase) {
                                 sheetOpen = true
                             },
                             currentIndex = currentIndex.value,
+                            deviceStatus = deviceStatus.value,
 
 
                             )
 
-//                    }
+                  }
                 }
 
             ) {
@@ -815,51 +819,54 @@ fun HorizontalPagerScreen(
     playSong: (Song) -> Unit,
     handleAction: (String) -> Unit,
     openSheet: () -> Unit,
-    currentIndex: Int
+    currentIndex: Int,
+    deviceStatus: String
 
 ) {
 
+    if(songList.isNotEmpty() && deviceStatus == "online") {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(100.dp)
+                .clickable {
+                    openSheet()
+                }
+        ) {
+            val pagerState = rememberPagerState(
+                // Set the initial page to the middle index if available
+                initialPage = songList.size / 2
+            )
 
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-            .clickable {
-                openSheet()
-            }
-    ) {
-        val pagerState = rememberPagerState(
-            // Set the initial page to the middle index if available
-            initialPage = songList.size / 2
-        )
+            HorizontalPager(
+                count = Int.MAX_VALUE,
+                state = pagerState,
+                modifier = Modifier.weight(1f)
 
-        HorizontalPager(
-            count = Int.MAX_VALUE,
-            state = pagerState,
-            modifier = Modifier.weight(1f)
-        ) { currentPage ->
-            // Calculate the actual index by taking modulo with the songList size
-            val index = currentPage % songList.size
+            ) { currentPage ->
+                // Calculate the actual index by taking modulo with the songList size
+                val index = currentPage % songList.size
 
                 BottomTrackController(songList[index], status, handleAction)
 
 
-        }
-
-        LaunchedEffect(pagerState.currentPage) {
-            val index = pagerState.currentPage % songList.size
-
-            val currentSong = songList[index]
-
-            if (status == "Playing") {
-                playSong(currentSong)
             }
-            Log.i("CircularHorizontalPagerScreen", "status: $status")
-            // Additional logic...
-        }
-        LaunchedEffect(currentIndex) {
-            val index = pagerState.currentPage % songList.size
-            pagerState.animateScrollToPage(currentIndex)
+
+            LaunchedEffect(pagerState.currentPage) {
+                val index = pagerState.currentPage % songList.size
+
+                val currentSong = songList[index]
+
+                if (status == "Playing") {
+                    playSong(currentSong)
+                }
+                Log.i("CircularHorizontalPagerScreen", "status: $status")
+                // Additional logic...
+            }
+            LaunchedEffect(currentIndex) {
+                Log.i("ANimating to ", "$currentIndex")
+                pagerState.animateScrollToPage(currentIndex)
+            }
         }
     }
 }

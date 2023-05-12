@@ -30,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -97,13 +98,15 @@ fun BottomTrackController(
             Modifier
                 .fillMaxWidth()
                 .height(60.dp)
-                .background(Color.Gray)
+                .background(MaterialTheme.colors.primary)
         ) {
 
             Image(
-                    painter = painterResource(id = R.drawable.scar_tissue),
+                    painter = painterResource(id = currentTrack.albumIMG),
                     contentDescription = "Song image",
-                    modifier = Modifier.size(100.dp)
+                    modifier = Modifier.fillMaxHeight().padding(5.dp).width(50.dp),
+                contentScale = ContentScale.Crop,
+
             )
 
             Column(
