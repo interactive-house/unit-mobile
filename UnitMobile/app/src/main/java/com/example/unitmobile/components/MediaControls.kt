@@ -1,16 +1,14 @@
 package com.example.unitmobile.components
 
-import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -20,12 +18,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -35,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.ViewModelProvider
 import com.airbnb.lottie.compose.*
 import com.example.unitmobile.R
@@ -44,6 +39,7 @@ import com.example.unitmobile.Song
 import com.example.unitmobile.SongSaver
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.PagerState
 import com.google.accompanist.pager.rememberPagerState
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -316,7 +312,9 @@ fun MediaControls(db: FirebaseDatabase) {
 //
 //
 //                    )
-                    HorizontalPagerScreen()
+                    HorizontalPagerScreen(status.value, songList, playSong = { song ->
+                        playSong(song)
+                    })
 
                 }
 
@@ -922,42 +920,36 @@ fun createItems() = listOf(
 )
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun HorizontalPagerScreen() {
+fun HorizontalPagerScreen(status: String, songList: List<Song>, playSong: (Song) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .height(100.dp)
     ) {
-        val items = createItems()
-        val pagerState = rememberPagerState()
+        val pagerState = rememberPagerState(
+            // Set the initial page to the middle index if available
+            initialPage = songList.size / 2
+        )
 
         HorizontalPager(
-            count = items.size,
+            count = Int.MAX_VALUE,
             state = pagerState,
             modifier = Modifier.weight(1f)
         ) { currentPage ->
-            Row(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                Text(
-                    text = items[currentPage].title,
-                    style = MaterialTheme.typography.h2
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = items[currentPage].subtitle,
-                    style = MaterialTheme.typography.h4
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = items[currentPage].description,
-                    style = MaterialTheme.typography.body1
-                )
-            }
+            // Calculate the actual index by taking modulo with the songList size
+            val index = currentPage % songList.size
+            BottomTrackController(songList[index])
         }
 
-        val coroutineScope = rememberCoroutineScope()
-
+        LaunchedEffect(pagerState.currentPage) {
+            val index = pagerState.currentPage % songList.size
+            val currentSong = songList[index]
+            if (status == "Playing") {
+                playSong(currentSong)
+            }
+            Log.i("CircularHorizontalPagerScreen", "status: $status")
+            // Additional logic...
+        }
     }
 }
 
@@ -966,5 +958,4 @@ data class HorizontalPagerContent(
     val subtitle: String,
     val description: String
 )
-
 

@@ -1,5 +1,20 @@
 package com.example.unitmobile.components
 
+import android.util.Log
+import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.Text
@@ -8,8 +23,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.unitmobile.Song
+import com.example.unitmobile.R
 
 @Composable
 fun TextFieldWithToggle(
@@ -36,4 +61,109 @@ fun TextFieldWithToggle(
 
         }
     )
+}
+@Composable
+fun BottomTrackController(
+    currentTrack: Song,
+) {
+    Log.i("BottomTrackController", "currentTrack: $currentTrack")
+    val song = remember { mutableStateOf(currentTrack) }
+
+    //Player
+
+        Column(
+            modifier = Modifier
+                .height(1.dp)
+                .fillMaxWidth()
+                .background(Color.Gray)
+        ) {
+
+            Row(
+                Modifier
+                    .fillMaxHeight()
+                    .background(Color.White)
+                    .fillMaxWidth()
+                    .animateContentSize()
+            ) {
+
+            }
+        }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .background(Color.Gray)
+        ) {
+
+            Image(
+                    painter = painterResource(id = R.drawable.scar_tissue),
+                    contentDescription = "Song image",
+                    modifier = Modifier.size(100.dp)
+            )
+
+            Column(
+                Modifier
+                    .padding(start = 10.dp)
+                    .align(Alignment.CenterVertically)
+                    .fillMaxWidth(0.7f)
+            ) {
+                Text(
+                    text = song.value.song,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    maxLines = 1
+                )
+                Text(
+                    text = song.value.artist,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 13.sp
+                )
+            }
+            Box(
+                contentAlignment = Alignment.CenterEnd,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .fillMaxHeight()
+            ) {
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .width(150.dp)
+                        .padding(end = 10.dp)
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.door_closed),
+                        contentDescription = "Cast",
+                        modifier = Modifier
+                            .size(32.dp)
+                          ,
+                        colorFilter = ColorFilter.tint(Color.Gray)
+                    )
+                    Image(
+                        painter = painterResource(id = R.drawable.lamp_on),
+                        contentDescription = "Like",
+                        modifier = Modifier.size(32.dp),)
+
+                    Image(
+                        painter = painterResource(id = R.drawable.info_icon),
+                        contentDescription = "Like",
+                        modifier = Modifier
+                            .size(32.dp),
+                        colorFilter = ColorFilter.tint(Color.White),
+                    )
+                }
+
+            }
+        }
+        Spacer(
+            modifier = Modifier
+                .height(2.dp)
+                .fillMaxWidth()
+                .background(Color.Black)
+        )
+
+
 }
