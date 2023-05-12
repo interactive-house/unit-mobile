@@ -79,7 +79,13 @@ fun MediaControls(db: FirebaseDatabase) {
     }
     viewModel.currentTrack.observe(LocalContext.current as androidx.activity.ComponentActivity) { track ->
         Log.d("MediaControls current track123", "Current track: $track")
-        songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
+        if (track.trackID == "") {
+            currentTrack.value = Song("", "", "", 0)
+        } else {
+            songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
+        }
+
+
 
 
 
@@ -124,30 +130,14 @@ fun MediaControls(db: FirebaseDatabase) {
 
     fun handleAction(action: String) {
         val data: Map<String, Any>
+        Log.i("MediaControls", "Action: $action")
 
-        if (action == "stop") {
-
-            currentTrack.value = Song("", "", "", 0)
-            data = mapOf(
-                "id" to UUID.randomUUID().toString(),
-                "type" to action
-            )
-        } else {
-            if (currentTrack.value.trackID == "") {
-                return
-            }
-            data = mapOf(
-                "id" to UUID.randomUUID().toString(),
-                "type" to action,
-                "trackId" to currentTrack.value.trackID
-            )
-
-        }
-
-
+        data = mapOf(
+            "id" to UUID.randomUUID().toString(),
+            "type" to action
+        )
 
         simulatedDevicesRef.child("action").setValue(data)
-
 
     }
 
