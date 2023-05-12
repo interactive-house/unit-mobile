@@ -142,19 +142,19 @@ fun MediaControls(db: FirebaseDatabase) {
     }
 
     fun playSong(song: Song) {
-        currentTrack.value = song
         val data = mapOf(
             "id" to UUID
                 .randomUUID()
                 .toString(),
             "type" to "play",
-            "trackId" to currentTrack.value.trackID
+            "trackId" to song.trackID
         )
         simulatedDevicesRef
             .child("action")
             .setValue(data)
 
     }
+
     viewModel.ttsPhrase.observe(LocalContext.current as androidx.activity.ComponentActivity) { phrase ->
         Log.d("MediaControls", "TTS phrase: $phrase")
         val phrase = phrase.lowercase()
