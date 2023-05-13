@@ -45,6 +45,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                     var resID = getApplication<Application>().resources.getIdentifier(
                         albumDrawable, "drawable", getApplication<Application>().packageName
                     )
+
                     Log.i("SharedViewModel album res", "ResID: $resID")
                     val song = Song(
                         (songSnapshot.value as Map<*, *>)["song"].toString().replace("[", "")
@@ -53,7 +54,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                             .replace("]", ""),
                         (songSnapshot.value as Map<*, *>)["trackId"].toString().replace("[", "")
                             .replace("]", ""),
-                        resID
+                        if(resID != 0) resID else R.drawable.default_img
                     )
                     if (song != null) {
                         Log.i("SharedViewModel", "Song: $song")
