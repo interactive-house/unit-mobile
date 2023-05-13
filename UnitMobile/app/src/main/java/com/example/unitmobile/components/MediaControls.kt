@@ -244,98 +244,21 @@ fun MediaControls(db: FirebaseDatabase) {
 
 
                 bottomBar = {
-//                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online") {
-//                        BottomAppBar(
-//                            backgroundColor = MaterialTheme.colors.primary,
-//                            contentColor = Color.White,
-//
-//                            cutoutShape = CircleShape,
-//                            modifier = Modifier.clickable {
-//                                sheetOpen = !sheetOpen
-//
-//                            }
-//
-//
-//                        ) {
-//                            Row(
-//                                modifier = Modifier.fillMaxWidth(),
-//                                horizontalArrangement = Arrangement.Center,
-//                                verticalAlignment = Alignment.CenterVertically
-//                            ) {
-//                                Box(modifier = Modifier.align(Alignment.CenterVertically)) {
-//                                    SpinningImage(status.value == "Playing", currentTrack.value, 50.dp)
-//                                }
-//                                IconButton(onClick = { previousSong() }) {
-//                                    Icon(
-//                                        imageVector = Icons.Filled.SkipPrevious,
-//                                        contentDescription = "Previous song"
-//                                    )
-//                                }
-//                                IconButton(
-//                                    onClick = {
-//                                        val newStatus = if (status.value == "Playing") "pause" else "play"
-//                                        handleAction(newStatus)
-//                                    },
-//                                    modifier = Modifier.padding(horizontal = 8.dp)
-//                                ) {
-//                                    if (status.value == "Playing") {
-//                                        Icon(Icons.Default.Pause, contentDescription = "Pause")
-//                                    } else {
-//                                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
-//                                    }
-//                                }
-//                                IconButton(onClick = { handleAction("stop") }) {
-//                                    Icon(
-//                                        imageVector = Icons.Filled.Stop,
-//                                        contentDescription = "Stop song"
-//                                    )
-//                                }
-//                                IconButton(onClick = { nextSong() }) {
-//                                    Icon(
-//                                        imageVector = Icons.Filled.SkipNext,
-//                                        contentDescription = "Next song"
-//                                    )
-//                                }
-//                            }
-//
-//                        }
-//                    }
-//                    DraggableTextLowLevel(
-//                        swipeRight = {
-//                            previousSong()
-//                        },
-//                        swipeLeft = {
-//                            nextSong()
-//                        },
-//                        currentTrack = currentTrack.value,
-//                        songList = songList,
-//                        trackIndex = currentIndex.value ,
-//
-//
-//
-//
-//
-//
-//                    )
-                   AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online")  {
-                        HorizontalPagerScreen(
-                            status.value, songList,
-                            playSong = { song ->
-                                playSong(song)
-                            },
-                            handleAction = { action ->
-                                handleAction(action)
-                            },
+                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online") {
+                        BottomTrackController(
+                            currentTrack = currentTrack.value,
+                            status = status.value,
+                            handleAction = { handleAction(it) },
+                            previousSong = { previousSong() },
+                            nextSong = { nextSong()},
                             openSheet = {
-                                sheetOpen = true
-                            },
-                            currentIndex = currentIndex.value,
-                            deviceStatus = deviceStatus.value,
+                                Log.i("sheet", "open sheet")
 
-
+                                sheetOpen = true},
                             )
 
-                  }
+                        }
+
                 }
 
             ) {
@@ -362,7 +285,7 @@ fun MediaControls(db: FirebaseDatabase) {
 
 
                                     Column(
-                                        modifier = Modifier.padding(16.dp)
+                                        modifier = Modifier.padding(8.dp)
                                     ) {
                                         IconButton(
                                             onClick = { sheetOpen = false },
@@ -809,66 +732,3 @@ fun DeviceOfflineAnimation() {
 
 
 }
-
-
-@OptIn(ExperimentalPagerApi::class)
-@Composable
-fun HorizontalPagerScreen(
-    status: String,
-    songList: List<Song>,
-    playSong: (Song) -> Unit,
-    handleAction: (String) -> Unit,
-    openSheet: () -> Unit,
-    currentIndex: Int,
-    deviceStatus: String
-
-) {
-
-    if(songList.isNotEmpty() && deviceStatus == "online") {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-                .clickable {
-                    openSheet()
-                }
-        ) {
-            val pagerState = rememberPagerState(
-                // Set the initial page to the middle index if available
-                initialPage = songList.size / 2
-            )
-
-            HorizontalPager(
-                count = Int.MAX_VALUE,
-                state = pagerState,
-                modifier = Modifier.weight(1f)
-
-            ) { currentPage ->
-                // Calculate the actual index by taking modulo with the songList size
-                val index = currentPage % songList.size
-
-                BottomTrackController(songList[index], status, handleAction)
-
-
-            }
-
-            LaunchedEffect(pagerState.currentPage) {
-                val index = pagerState.currentPage % songList.size
-
-                val currentSong = songList[index]
-
-                if (status == "Playing") {
-                    playSong(currentSong)
-                }
-                Log.i("CircularHorizontalPagerScreen", "status: $status")
-                // Additional logic...
-            }
-            LaunchedEffect(currentIndex) {
-                Log.i("ANimating to ", "$currentIndex")
-                pagerState.animateScrollToPage(currentIndex)
-            }
-        }
-    }
-}
-
-

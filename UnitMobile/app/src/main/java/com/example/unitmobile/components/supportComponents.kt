@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,9 @@ import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
@@ -70,64 +74,75 @@ fun TextFieldWithToggle(
 fun BottomTrackController(
     currentTrack: Song,
     status: String,
-    handleAction : (String) -> Unit
+    handleAction : (String) -> Unit,
+    previousSong: () -> Unit,
+    nextSong: () -> Unit,
+    openSheet: () -> Unit
 ) {
     Log.i("BottomTrackController", "currentTrack: $currentTrack")
-    val song = remember { mutableStateOf(currentTrack) }
+
 
     //Player
 
-        Column(
-            modifier = Modifier
-                .height(1.dp)
-                .fillMaxWidth()
-                .background(MaterialTheme.colors.primary)
-        ) {
-
-            Row(
-                Modifier
-                    .fillMaxHeight()
-                    .background(Color.White)
-                    .fillMaxWidth()
-                    .animateContentSize()
-            ) {
-
-            }
-        }
         Row(
             Modifier
                 .fillMaxWidth()
                 .height(60.dp)
                 .background(MaterialTheme.colors.primary)
+                .clickable{
+                    openSheet()
+                }
         ) {
-
-            Image(
+            if(currentTrack.song != "") {
+                Image(
                     painter = painterResource(id = currentTrack.albumIMG),
                     contentDescription = "Song image",
-                    modifier = Modifier.fillMaxHeight().padding(5.dp).width(50.dp),
-                contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(5.dp)
+                        .width(50.dp),
+                    contentScale = ContentScale.Crop,
 
-            )
+                    )
+            }
 
-            Column(
-                Modifier
-                    .padding(start = 10.dp)
-                    .align(Alignment.CenterVertically)
-                    .fillMaxWidth(0.7f)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = song.value.song,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    maxLines = 1
-                )
-                Text(
-                    text = song.value.artist,
-                    color = Color.White,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 13.sp
-                )
+
+                IconButton(onClick = { previousSong() }) {
+                    Icon(
+                        imageVector = Icons.Filled.SkipPrevious,
+                        contentDescription = "Previous song"
+                    )
+                }
+                IconButton(
+                    onClick = {
+                        val newStatus = if (status == "Playing") "pause" else "play"
+                        handleAction(newStatus)
+                    },
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    if (status == "Playing") {
+                        Icon(Icons.Default.Pause, contentDescription = "Pause")
+                    } else {
+                        Icon(Icons.Default.PlayArrow, contentDescription = "Play")
+                    }
+                }
+                IconButton(onClick = { handleAction("stop") }) {
+                    Icon(
+                        imageVector = Icons.Filled.Stop,
+                        contentDescription = "Stop song"
+                    )
+                }
+                IconButton(onClick = { nextSong() }) {
+                    Icon(
+                        imageVector = Icons.Filled.SkipNext,
+                        contentDescription = "Next song"
+                    )
+                }
             }
             Box(
                 contentAlignment = Alignment.CenterEnd,
