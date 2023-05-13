@@ -63,6 +63,8 @@ fun MediaControls(db: FirebaseDatabase) {
     var songList: List<Song> = remember { mutableStateListOf<Song>() }
     var sheetOpen by remember { mutableStateOf(false) }
 
+    val isLoading = remember { mutableStateOf(true) }
+
     val context = LocalContext.current
     val deviceStatus = rememberSaveable { mutableStateOf("No device") }
     val status = rememberSaveable { mutableStateOf("No status") }
@@ -100,6 +102,7 @@ fun MediaControls(db: FirebaseDatabase) {
                 songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })
         }
 
+        isLoading.value = false
 
     }
     viewModel.currentStatus.observe(LocalContext.current as androidx.activity.ComponentActivity) { it ->
@@ -234,351 +237,374 @@ fun MediaControls(db: FirebaseDatabase) {
         }
     }
 
-    Box(Modifier.fillMaxSize()) {
-        Box(
-            Modifier
-                .align(Alignment.TopCenter)
-                .fillMaxHeight()
-        ) {
-            Scaffold(
-
-
-                bottomBar = {
-                    AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online") {
-                        BottomTrackController(
-                            currentTrack = currentTrack.value,
-                            status = status.value,
-                            handleAction = { handleAction(it) },
-                            previousSong = { previousSong() },
-                            nextSong = { nextSong()},
-                            openSheet = {
-                                Log.i("sheet", "open sheet")
-
-                                sheetOpen = true},
-                            )
-
-                        }
-
+    Crossfade(targetState = isLoading.value) {
+        when(it) {
+            true -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    LoadingScreen()
                 }
+            }
 
-            ) {
-
-
-                Crossfade(targetState = sheetOpen, modifier = Modifier.padding(it)) {
-                    when (it) {
-                        true -> {
-                            Box(
-                                contentAlignment = Alignment.Center,
-                                modifier = Modifier.fillMaxSize()
-                            ) {
-
-
-                                Card(
+            false -> {
+                Box(Modifier.fillMaxSize()) {
+                    Box(
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxHeight()
+                    ) {
+                        Scaffold(
 
 
-                                    contentColor = Color.White,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .fillMaxHeight()
+                            bottomBar = {
+                                AnimatedVisibility(visible = !sheetOpen && deviceStatus.value == "online") {
+                                    BottomTrackController(
+                                        currentTrack = currentTrack.value,
+                                        status = status.value,
+                                        handleAction = { handleAction(it) },
+                                        previousSong = { previousSong() },
+                                        nextSong = { nextSong()},
+                                        openSheet = {
+                                            Log.i("sheet", "open sheet")
 
-                                ) {
+                                            sheetOpen = true},
+                                    )
+
+                                }
+
+                            }
+
+                        ) {
 
 
-                                    Column(
-                                        modifier = Modifier.padding(8.dp)
-                                    ) {
-                                        IconButton(
-                                            onClick = { sheetOpen = false },
-                                            modifier = Modifier.align(Alignment.End)
-
-                                        )
-                                        {
-                                            Icon(
-                                                imageVector = Icons.Filled.ExpandMore,
-
-                                                contentDescription = "Stop song",
-
-                                                )
-                                        }
+                            Crossfade(targetState = sheetOpen, modifier = Modifier.padding(it)) {
+                                when (it) {
+                                    true -> {
                                         Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .wrapContentSize(Alignment.Center)
-                                                .background(
-                                                    color = MaterialTheme.colors.primary,
-                                                    shape = RoundedCornerShape(16.dp)
-                                                )
+                                            contentAlignment = Alignment.Center,
+                                            modifier = Modifier.fillMaxSize()
                                         ) {
-                                            Column(
 
-                                                horizontalAlignment = Alignment.CenterHorizontally,
+
+                                            Card(
+
+
+                                                contentColor = Color.White,
                                                 modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .fillMaxHeight()
 
                                             ) {
-                                                Spacer(modifier = Modifier.height(64.dp))
 
-                                                Text(
-                                                    text = "Current track:",
-                                                    fontSize = 18.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
 
-                                                Text(
-                                                    text = currentTrack.value.song,
-                                                    fontSize = 18.sp
-                                                )
-                                                Spacer(modifier = Modifier.height(32.dp))
-                                                Text(
-                                                    text = "Artist: ",
-                                                    fontSize = 18.sp,
-                                                    fontWeight = FontWeight.Bold
-                                                )
-                                                Text(
-                                                    text = currentTrack.value.artist,
-                                                    fontSize = 18.sp
-                                                )
-                                                Spacer(modifier = Modifier.height(48.dp))
+                                                Column(
+                                                    modifier = Modifier.padding(8.dp)
+                                                ) {
+                                                    IconButton(
+                                                        onClick = { sheetOpen = false },
+                                                        modifier = Modifier.align(Alignment.End)
+
+                                                    )
+                                                    {
+                                                        Icon(
+                                                            imageVector = Icons.Filled.ExpandMore,
+
+                                                            contentDescription = "Stop song",
+
+                                                            )
+                                                    }
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .fillMaxSize()
+                                                            .wrapContentSize(Alignment.Center)
+                                                            .background(
+                                                                color = MaterialTheme.colors.primary,
+                                                                shape = RoundedCornerShape(16.dp)
+                                                            )
+                                                    ) {
+                                                        Column(
+
+                                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                                            modifier = Modifier
+
+                                                        ) {
+                                                            Spacer(modifier = Modifier.height(64.dp))
+
+                                                            Text(
+                                                                text = "Current track:",
+                                                                fontSize = 18.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+
+                                                            Text(
+                                                                text = currentTrack.value.song,
+                                                                fontSize = 18.sp
+                                                            )
+                                                            Spacer(modifier = Modifier.height(32.dp))
+                                                            Text(
+                                                                text = "Artist: ",
+                                                                fontSize = 18.sp,
+                                                                fontWeight = FontWeight.Bold
+                                                            )
+                                                            Text(
+                                                                text = currentTrack.value.artist,
+                                                                fontSize = 18.sp
+                                                            )
+                                                            Spacer(modifier = Modifier.height(48.dp))
 
 //                Image(
 //                    painter = painterResource(id = R.drawable.chumbawumba),
 //                    contentDescription = "Song image",
 //                    modifier = Modifier.size(100.dp)
 //                )
-                                                SpinningImage(
-                                                    status.value == "Playing",
-                                                    currentTrack.value,
-                                                    size = 150.dp
-                                                )
-                                                Spacer(modifier = Modifier.height(32.dp))
+                                                            SpinningImage(
+                                                                status.value == "Playing",
+                                                                currentTrack.value,
+                                                                size = 150.dp
+                                                            )
+                                                            Spacer(modifier = Modifier.height(32.dp))
 //                if(currentTrack.value != null && status.value == "play") {
 //                    MusicAnimation()
 //                }
-                                                Row(
-                                                    horizontalArrangement = Arrangement.Center,
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    modifier = Modifier.padding(vertical = 8.dp)
-                                                ) {
-                                                    IconButton(
-                                                        onClick = {
-                                                            previousSong()
-                                                        },
-                                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.SkipPrevious,
-                                                            contentDescription = "Previous Track"
-                                                        )
-                                                    }
-                                                    IconButton(
-                                                        onClick = {
-                                                            val newStatus =
-                                                                if (status.value == "Playing") "pause" else "play"
-                                                            handleAction(newStatus)
-                                                        },
-                                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                                    ) {
-                                                        if (status.value == "Playing") {
-                                                            Icon(
-                                                                Icons.Default.Pause,
-                                                                contentDescription = "Pause"
-                                                            )
-                                                        } else {
-                                                            Icon(
-                                                                Icons.Default.PlayArrow,
-                                                                contentDescription = "Play"
-                                                            )
-                                                        }
-                                                    }
-                                                    IconButton(
-                                                        onClick = {
-                                                            handleAction("stop")
-
-                                                        },
-                                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.Stop,
-                                                            contentDescription = "Stop"
-                                                        )
-                                                    }
-                                                    IconButton(
-                                                        onClick = {
-                                                            nextSong()
-                                                        },
-                                                        modifier = Modifier.padding(horizontal = 8.dp)
-                                                    ) {
-                                                        Icon(
-                                                            Icons.Default.SkipNext,
-                                                            contentDescription = "Next Track"
-                                                        )
-                                                    }
-                                                }
-                                                Spacer(modifier = Modifier.height(16.dp))
-
-                                            }
-
-
-                                        }
-
-
-                                    }
-                                }
-                            }
-
-                        }
-
-                        false -> {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                            ) {
-                                Column(
-
-                                    horizontalAlignment = Alignment.CenterHorizontally
-
-
-                                ) {
-                                    Text(
-                                        text = "Device status:",
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center,
-                                    )
-                                    Text(
-                                        text = deviceStatus.value,
-                                        fontSize = 18.sp,
-                                        textAlign = TextAlign.Center,
-                                    )
-                                }
-
-
-
-
-
-
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Card(modifier = Modifier.fillMaxSize()) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text(
-                                            text = "Song list: ",
-                                            fontSize = 18.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                        LazyColumn(
-                                            modifier = Modifier.padding(16.dp),
-                                        ) {
-                                            items(songList.size) { index ->
-                                                Divider(
-                                                    startIndent = 0.dp,
-                                                    thickness = 1.dp,
-                                                    color = Color.Gray
-                                                )
-                                                Card(
-                                                    modifier = Modifier
-                                                        .fillMaxWidth()
-                                                        .padding(8.dp)
-                                                        .clickable(enabled = deviceStatus.value == "online") {
-
-
-                                                            playSong(songList[index])
-                                                        }) {
-                                                    Column(
-                                                        modifier = Modifier
-                                                            .padding(8.dp)
-                                                            .wrapContentWidth()
-                                                    ) {
-
-
-                                                        Row(
-                                                            modifier = Modifier.fillMaxWidth(),
-                                                            horizontalArrangement = Arrangement.SpaceBetween
-                                                        ) {
-
-
-                                                            if (songList[index].albumIMG != 0) {
-                                                                Image(
-                                                                    painter = painterResource(id = songList[index].albumIMG),
-                                                                    contentDescription = "Album Image",
-                                                                    contentScale = ContentScale.Crop,
-                                                                    modifier = Modifier
-                                                                        .size(40.dp)
-                                                                        .align(Alignment.CenterVertically)
-                                                                )
-                                                            }
-                                                            Column(
-                                                                modifier = Modifier
-                                                                    .weight(1f)
-                                                                    .fillMaxHeight()
-                                                                    .align(Alignment.CenterVertically)
-                                                                    .padding(end = 8.dp) // add padding to the right side
-                                                                    .wrapContentWidth(align = Alignment.CenterHorizontally)
+                                                            Row(
+                                                                horizontalArrangement = Arrangement.Center,
+                                                                verticalAlignment = Alignment.CenterVertically,
+                                                                modifier = Modifier.padding(vertical = 8.dp)
                                                             ) {
-                                                                Text(
-                                                                    text = "${songList[index].song} \n",
-                                                                    modifier = Modifier.align(
-                                                                        Alignment.Start
-                                                                    )
-                                                                )
-                                                                Text(text = "${songList[index].artist}")
-                                                            }
-                                                            Column(
-
-                                                                modifier = Modifier
-                                                                    .wrapContentSize()
-                                                                    .align(Alignment.CenterVertically)
-                                                                    .padding(start = 8.dp), // add padding to the left side
-
-                                                                horizontalAlignment = Alignment.End,
-
+                                                                IconButton(
+                                                                    onClick = {
+                                                                        previousSong()
+                                                                    },
+                                                                    modifier = Modifier.padding(horizontal = 8.dp)
                                                                 ) {
-                                                                if (currentTrack.value.song == songList[index].song && deviceStatus.value == "online") {
+                                                                    Icon(
+                                                                        Icons.Default.SkipPrevious,
+                                                                        contentDescription = "Previous Track"
+                                                                    )
+                                                                }
+                                                                IconButton(
+                                                                    onClick = {
+                                                                        val newStatus =
+                                                                            if (status.value == "Playing") "pause" else "play"
+                                                                        handleAction(newStatus)
+                                                                    },
+                                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                                ) {
+                                                                    if (status.value == "Playing") {
+                                                                        Icon(
+                                                                            Icons.Default.Pause,
+                                                                            contentDescription = "Pause"
+                                                                        )
+                                                                    } else {
+                                                                        Icon(
+                                                                            Icons.Default.PlayArrow,
+                                                                            contentDescription = "Play"
+                                                                        )
+                                                                    }
+                                                                }
+                                                                IconButton(
+                                                                    onClick = {
+                                                                        handleAction("stop")
 
-                                                                    MusicAnimation(status.value == "Playing")
-
+                                                                    },
+                                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                                ) {
+                                                                    Icon(
+                                                                        Icons.Default.Stop,
+                                                                        contentDescription = "Stop"
+                                                                    )
+                                                                }
+                                                                IconButton(
+                                                                    onClick = {
+                                                                        nextSong()
+                                                                    },
+                                                                    modifier = Modifier.padding(horizontal = 8.dp)
+                                                                ) {
+                                                                    Icon(
+                                                                        Icons.Default.SkipNext,
+                                                                        contentDescription = "Next Track"
+                                                                    )
                                                                 }
                                                             }
+                                                            Spacer(modifier = Modifier.height(16.dp))
+
                                                         }
 
 
                                                     }
 
-                                                }
-                                                if (index == songList.size - 1) {
-                                                    Divider(
-                                                        startIndent = 0.dp,
-                                                        thickness = 1.dp,
-                                                        color = Color.Gray
-                                                    )
-                                                }
 
+                                                }
                                             }
                                         }
 
-
                                     }
 
+                                    false -> {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                        ) {
+                                            Column(
 
+                                                horizontalAlignment = Alignment.CenterHorizontally
+
+
+                                            ) {
+                                                Text(
+                                                    text = "Device status:",
+                                                    fontSize = 18.sp,
+                                                    fontWeight = FontWeight.Bold,
+                                                    textAlign = TextAlign.Center,
+                                                )
+                                                Text(
+                                                    text = deviceStatus.value,
+                                                    fontSize = 18.sp,
+                                                    textAlign = TextAlign.Center,
+                                                )
+                                            }
+
+
+
+
+
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Card(modifier = Modifier.fillMaxSize()) {
+                                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                    Text(
+                                                        text = "Song list: ",
+                                                        fontSize = 18.sp,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                    LazyColumn(
+                                                        modifier = Modifier.padding(16.dp),
+                                                    ) {
+                                                        items(songList.size) { index ->
+                                                            Divider(
+                                                                startIndent = 0.dp,
+                                                                thickness = 1.dp,
+                                                                color = Color.Gray
+                                                            )
+                                                            Card(
+                                                                modifier = Modifier
+                                                                    .fillMaxWidth()
+                                                                    .padding(8.dp)
+                                                                    .clickable(enabled = deviceStatus.value == "online") {
+
+
+                                                                        playSong(songList[index])
+                                                                    }) {
+                                                                Column(
+                                                                    modifier = Modifier
+                                                                        .padding(8.dp)
+                                                                        .wrapContentWidth()
+                                                                ) {
+
+
+                                                                    Row(
+                                                                        modifier = Modifier.fillMaxWidth(),
+                                                                        horizontalArrangement = Arrangement.SpaceBetween
+                                                                    ) {
+
+
+                                                                        if (songList[index].albumIMG != 0) {
+                                                                            Image(
+                                                                                painter = painterResource(id = songList[index].albumIMG),
+                                                                                contentDescription = "Album Image",
+                                                                                contentScale = ContentScale.Crop,
+                                                                                modifier = Modifier
+                                                                                    .size(40.dp)
+                                                                                    .align(Alignment.CenterVertically)
+                                                                            )
+                                                                        }
+                                                                        Column(
+                                                                            modifier = Modifier
+                                                                                .weight(1f)
+                                                                                .fillMaxHeight()
+                                                                                .align(Alignment.CenterVertically)
+                                                                                .padding(end = 8.dp) // add padding to the right side
+                                                                                .wrapContentWidth(
+                                                                                    align = Alignment.CenterHorizontally
+                                                                                )
+                                                                        ) {
+                                                                            Text(
+                                                                                text = "${songList[index].song} \n",
+                                                                                modifier = Modifier.align(
+                                                                                    Alignment.Start
+                                                                                )
+                                                                            )
+                                                                            Text(text = "${songList[index].artist}")
+                                                                        }
+                                                                        Column(
+
+                                                                            modifier = Modifier
+                                                                                .wrapContentSize()
+                                                                                .align(Alignment.CenterVertically)
+                                                                                .padding(start = 8.dp), // add padding to the left side
+
+                                                                            horizontalAlignment = Alignment.End,
+
+                                                                            ) {
+                                                                            if (currentTrack.value.song == songList[index].song && deviceStatus.value == "online") {
+
+                                                                                MusicAnimation(status.value == "Playing")
+
+                                                                            }
+                                                                        }
+                                                                    }
+
+
+                                                                }
+
+                                                            }
+                                                            if (index == songList.size - 1) {
+                                                                Divider(
+                                                                    startIndent = 0.dp,
+                                                                    thickness = 1.dp,
+                                                                    color = Color.Gray
+                                                                )
+                                                            }
+
+                                                        }
+                                                    }
+
+
+                                                }
+
+
+                                            }
+
+                                        }
+
+                                    }
                                 }
 
                             }
 
+
                         }
+
                     }
+                    if (deviceStatus.value == "offline") {
+                        sheetOpen = false
+                        MyDialog(onDismiss = { /*TODO*/ })
+                    }
+
 
                 }
 
-
             }
-
         }
-        if (deviceStatus.value == "offline") {
-            sheetOpen = false
-            MyDialog(onDismiss = { /*TODO*/ })
-        }
-
 
     }
+
+
 
 
 }
