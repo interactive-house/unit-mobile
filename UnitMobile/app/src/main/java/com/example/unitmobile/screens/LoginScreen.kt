@@ -29,8 +29,7 @@ import kotlinx.coroutines.launch
 fun LoginScreen(
     onLogIn: (Any?) -> Unit,
     showRegisterCallback: () -> Unit,
-    modifier: Modifier = Modifier,
-    context: Context = LocalContext.current
+    modifier: Modifier = Modifier
 ){
     val auth = FirebaseAuth.getInstance()
 
@@ -116,7 +115,7 @@ fun CenteredClickableText(text: String, onClick: () -> Unit) {
 
             text = buildAnnotatedString {
                 withStyle(style = SpanStyle(color = Color.Blue, fontWeight = FontWeight.Bold)) {
-                    append("Don't have an account? Sign up ")
+                    append(text)
                 }
 
             },

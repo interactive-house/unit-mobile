@@ -325,9 +325,7 @@ fun NavigationGraph(
                     onRegisterCallback(it)
                 },
                 Modifier,
-                context = LocalContext.current,
                 db
-
             )
         }
         composable("login") {
@@ -337,8 +335,7 @@ fun NavigationGraph(
 
                 },
                 showRegisterCallback = { showRegisterCallback() },
-                modifier = Modifier,
-                context = LocalContext.current
+                modifier = Modifier
 
             )
         }
