@@ -53,17 +53,9 @@ fun HomeScreen(
         ItemDivider()
         WindowSwitch(db, itemStateTrue[1], itemStateFalse[1])
         ItemDivider()
-
         HumidityReader(db = db, lifecycleOwner = LocalLifecycleOwner.current)
-        //ItemDivider()
-        //MediaControls(db = db)
     }
 }
-@Composable
-fun ItemDivider() {
-    Divider(color = Color.Gray, thickness = 1.dp, modifier = Modifier.padding(vertical = 16.dp))
-}
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun Information() {
     val showInformation = rememberSaveable { mutableStateOf(false) }

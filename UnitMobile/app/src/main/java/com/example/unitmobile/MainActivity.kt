@@ -1,6 +1,7 @@
 package com.example.unitmobile
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.speech.RecognizerIntent
@@ -12,8 +13,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -73,10 +77,10 @@ fun MyApp(
     db: FirebaseDatabase,
     activity: Activity
 ) {
+    var showHelpPopup = remember { mutableStateOf(false) }
     // Change to false to skip login
     val auth = remember { FirebaseAuth.getInstance() }
     var userState by remember(auth) { mutableStateOf(auth.currentUser) }
-
     var startDestination by remember { mutableStateOf("login") }
 
     fun signOut() {
@@ -132,7 +136,7 @@ fun MyApp(
                     title = { Text("Smart House App") },
                     actions = {
                         if (userState != null) {
-                            DropdownMenuDemo(signOut = { signOut() }, userState)
+                            DropdownMenuDemo(signOut = { signOut() }, userState, showHelpPopup = {showHelpPopup.value = true})
 
                         }
 
@@ -145,22 +149,51 @@ fun MyApp(
                 }
             },
 
-            content = {
-                Box(
+            content = { padding ->
+
+                    Box(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(bottom = 56.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(it),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
+                        if (showHelpPopup.value) {
+                            AlertDialog(
+                                onDismissRequest = {
+                                    showHelpPopup.value = false
+                                },
+                                title = {
+                                    Text(text = "Help")
+                                },
+                                text = {
+                                    Text(text = "You can use voice commands to control your devices. \n\n" +
+                                            "For example, you can say \"Turn on the lights\" or \"Open the door\". \n\n" +
+                                            "You can also use the buttons in the bottom bar to navigate between screens." +
+                                            "\n\n" + "Commands: \n" +
+                                            "Turn on the lights \n" +
+                                            "Turn off the lights \n" +
+                                            "Open the door \n" +
+                                            "Close the door \n" +
+                                            "Open the window \n" +
+                                            "Close the window \n" +
+                                            "Next song \n" +
+                                            "Previous song \n" +
+                                            "Play song \n"
+                                    )
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            showHelpPopup.value = false
+                                        }
+                                    ) {
+                                        Text(text = "OK")
+                                    }
+                                }
+                            )
+                        }
 
 
-                    }
                     NavigationGraph(
                         navController = navController,
                         db = db,
@@ -183,10 +216,6 @@ fun MyApp(
                         onLoginCallback = {
                             userState = it as FirebaseUser?
                             navController.navigate("home") {
-
-
-
-
                             }
                         },
                         onRegisterCallback = {
@@ -417,11 +446,12 @@ fun handleSpeechToText(
 }
 
 @Composable
-fun DropdownMenuDemo(signOut: () -> Unit, userState: FirebaseUser?) {
+fun DropdownMenuDemo(signOut: () -> Unit, userState: FirebaseUser?, showHelpPopup : () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     val items = listOf(
         Pair(Icons.Filled.VerifiedUser, "Currently Logged in as: ${userState?.email}"),
+        Pair(Icons.Filled.Help, "Help"),
         Pair(Icons.Filled.Logout, "Logout"),
     )
 
@@ -429,35 +459,35 @@ fun DropdownMenuDemo(signOut: () -> Unit, userState: FirebaseUser?) {
         Spacer(modifier = Modifier.height(16.dp))
         IconButton(onClick = {
             expanded = true
-
         }) {
             Icon(Icons.Filled.Person, contentDescription = "Add")
         }
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            items.forEachIndexed { index, item ->
-                DropdownMenuItem(onClick = {
-                    if (index == 1) {
-                        signOut()
+    }
 
 
-                    }
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = { expanded = false }
+    ) {
+        items.forEachIndexed { index, item ->
+            DropdownMenuItem(onClick = {
+                if (index == 1) {
+                    showHelpPopup()
+                } else if (index == 2) {
+                    signOut()
+                }
+                expanded = false // Close the dropdown menu
 
-                }) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(item.first, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(item.second)
-                    }
+            }) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(item.first, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(item.second)
                 }
             }
-
         }
     }
 }
-
 
 fun sendToast(text: String, activity: Activity) {
     Toast.makeText(
