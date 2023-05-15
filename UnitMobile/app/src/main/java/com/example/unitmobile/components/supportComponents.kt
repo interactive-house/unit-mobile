@@ -111,6 +111,17 @@ fun BottomTrackController(
                     contentScale = ContentScale.Crop,
 
                     )
+            }else{
+                Image(
+                    painter = painterResource(id = R.drawable.default_img),
+                    contentDescription = "Song image",
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(5.dp)
+                        .width(50.dp),
+                    contentScale = ContentScale.Crop,
+
+                    )
             }
 
             Row(

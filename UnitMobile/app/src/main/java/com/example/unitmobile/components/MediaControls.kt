@@ -292,8 +292,6 @@ fun MediaControls(db: FirebaseDatabase) {
 
                                             Card(
 
-
-                                                contentColor = Color.White,
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .fillMaxHeight()
