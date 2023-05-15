@@ -11,6 +11,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -18,6 +25,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -29,9 +38,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
@@ -42,11 +53,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.unitmobile.navigation.BottomNavItem
+import com.example.unitmobile.screens.HelpScreen
 import com.example.unitmobile.screens.HomeScreen
 import com.example.unitmobile.screens.LoginScreen
 import com.example.unitmobile.screens.MediaScreen
 import com.example.unitmobile.screens.RegisterScreen
 import com.example.unitmobile.ui.theme.UnitMobileTheme
+import com.github.skgmn.composetooltip.AnchorEdge
+import com.github.skgmn.composetooltip.Tooltip
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.FirebaseDatabase
@@ -81,6 +95,10 @@ fun MyApp(
     // Change to false to skip login
     val auth = remember { FirebaseAuth.getInstance() }
     var userState by remember(auth) { mutableStateOf(auth.currentUser) }
+
+    var toolTipVisible by remember { mutableStateOf(true) }
+
+
     var startDestination by remember { mutableStateOf("login") }
 
     fun signOut() {
@@ -89,9 +107,11 @@ fun MyApp(
 
     }
 
-    if(userState != null){
+    val density = LocalDensity.current
+
+    if (userState != null) {
         startDestination = "home"
-    }else{
+    } else {
         startDestination = "login"
     }
 
@@ -166,20 +186,7 @@ fun MyApp(
                                     Text(text = "Help")
                                 },
                                 text = {
-                                    Text(text = "You can use voice commands to control your devices. \n\n" +
-                                            "For example, you can say \"Turn on the lights\" or \"Open the door\". \n\n" +
-                                            "You can also use the buttons in the bottom bar to navigate between screens." +
-                                            "\n\n" + "Commands: \n" +
-                                            "Turn on the lights \n" +
-                                            "Turn off the lights \n" +
-                                            "Open the door \n" +
-                                            "Close the door \n" +
-                                            "Open the window \n" +
-                                            "Close the window \n" +
-                                            "Next song \n" +
-                                            "Previous song \n" +
-                                            "Play song \n"
-                                    )
+                                    HelpScreen()
                                 },
                                 confirmButton = {
                                     Button(
@@ -216,6 +223,9 @@ fun MyApp(
                         onLoginCallback = {
                             userState = it as FirebaseUser?
                             navController.navigate("home") {
+
+
+
                             }
                         },
                         onRegisterCallback = {
@@ -226,7 +236,7 @@ fun MyApp(
                         },
 
 
-                    )
+                        )
 
                 }
 
@@ -238,6 +248,29 @@ fun MyApp(
                 .padding(bottom = 16.dp)
         ) {
             if (userState != null) {
+
+                if (toolTipVisible) {
+                    Tooltip(
+                        anchorEdge = AnchorEdge.Top,
+                        onDismissRequest = { toolTipVisible = false },
+
+                        ) {
+                        Box(
+
+                        ) {
+                            ClickableText(
+                                AnnotatedString("Click me to learn how to use the voice commands"),
+                                onClick = {
+                                    toolTipVisible = false
+                                    showHelpPopup.value = true
+                                },
+
+                                )
+                        }
+
+                    }
+                }
+
                 FloatingActionButton(
                     onClick = {
                         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -281,6 +314,7 @@ fun NavigationGraph(
                 MediaScreen(db = db)
             }
         }
+
         composable("register") {
             RegisterScreen(
                 onRegister = {
