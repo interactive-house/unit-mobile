@@ -98,6 +98,10 @@ fun MyApp(
 
     var toolTipVisible by remember { mutableStateOf(true) }
 
+    LaunchedEffect(key1 = userState) {
+        toolTipVisible = true
+    }
+
 
     var startDestination by remember { mutableStateOf("login") }
 
