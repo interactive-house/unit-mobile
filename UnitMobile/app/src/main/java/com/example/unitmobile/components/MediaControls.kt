@@ -744,7 +744,7 @@ fun DeviceOfflineAnimation() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = "Device stats is Offline")
+        Text(text = "Device status: Offline")
         LottieAnimation(
             composition = composition,
             progress = progress,
