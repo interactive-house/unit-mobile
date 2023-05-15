@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 fun RegisterScreen(
     onRegister: (Any?) -> Unit,
     modifier: Modifier = Modifier,
-    context: Context = LocalContext.current,
     db: FirebaseDatabase
 ) {
     val auth = FirebaseAuth.getInstance()
@@ -55,33 +54,33 @@ fun RegisterScreen(
                     value = username,
                     onValueChange = { username = it },
                     label = { Text("Email") },
-                    placeholder = { Text("Enter your email") } // Hint for the email/username field
+                    placeholder = { Text("Enter your email") }
                 )
 
                 TextFieldWithToggle(
                     label = "Password",
                     value = password,
                     onValueChange = { password = it },
-                    placeholder = "Enter your password" // Hint for the password field
+                    placeholder = "Enter your password"
                 )
 
                 TextFieldWithToggle(
                     label = "Confirm Password",
                     value = confirmedPassword,
                     onValueChange = { confirmedPassword = it },
-                    placeholder = "Confirm your password" // Hint for the confirm password field
+                    placeholder = "Confirm your password"
                 )
 
                 TextFieldWithToggle(
                     label = "Validation Code",
                     value = validationCode,
                     onValueChange = { validationCode = it },
-                    placeholder = "Enter the validation code" // Hint for the validation code field
+                    placeholder = "Enter the validation code"
                 )
                 Button(
                     modifier = Modifier.padding(vertical = 24.dp),
                     onClick = {
-                        // Regular expression patterns for password and email validation
+
                         val passwordPattern = Regex("^.{6,}$")
                         val emailPattern = Regex("^[A-Za-z].+@.+\\..+")
 
