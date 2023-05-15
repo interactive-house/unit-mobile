@@ -6,8 +6,10 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Button
+import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -21,6 +23,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.example.unitmobile.components.TextFieldWithToggle
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -33,60 +36,73 @@ fun LoginScreen(
 
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var scaffoldState = rememberScaffoldState()
+    var coroutineScope = rememberCoroutineScope()
 
-    Column(
+    Scaffold(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Welcome to Smart House App")
-        TextField(
-            value = email,
-            onValueChange = { email = it },
-            label = { Text("Username") }
-        )
+        scaffoldState = scaffoldState,
+        content = { padding ->
+            Column(
+                modifier = modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text("Welcome to Smart House App")
+                TextField(
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email") }
+                )
 
-        TextFieldWithToggle(
-            label = "Password",
-            value = password,
-            onValueChange = { password = it }
-        )
-        Button(
-            modifier = Modifier.padding(vertical = 24.dp),
-            onClick = {
-                if (email.isNotEmpty() && password.isNotEmpty()) {
-                    auth.signInWithEmailAndPassword(email, password)
-                        .addOnCompleteListener { task ->
-                            if (task.isSuccessful) {
-                                onLogIn(task.result?.user)
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    "Login failed, please try again",
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                TextFieldWithToggle(
+                    label = "Password",
+                    value = password,
+                    onValueChange = { password = it },
+                    placeholder = "Enter your password",
+                )
+                Button(
+                    modifier = Modifier.padding(vertical = 24.dp),
+                    onClick = {
+                        if (email.isNotEmpty() && password.isNotEmpty()) {
+                            auth.signInWithEmailAndPassword(email, password)
+                                .addOnCompleteListener { task ->
+                                    if (task.isSuccessful) {
+                                        onLogIn(task.result?.user)
+                                    } else {
+                                        task.exception?.message?.let {
+                                            coroutineScope.launch {
+                                                scaffoldState.snackbarHostState.showSnackbar(
+                                                    message = it
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                        } else {
+                            coroutineScope.launch {
+                                scaffoldState.snackbarHostState.showSnackbar(
+                                    message = "Please fill in the fields"
+                                )
                             }
                         }
-                } else {
-                    Toast.makeText(
-                        context,
-                        "Please fill in all the fields",
-                        Toast.LENGTH_SHORT
-                    ).show()
+
+                    }
+                ) {
+                    Text("Login")
                 }
+                CenteredClickableText(text = "Don't have an account? Sign up", onClick={
+                    Log.i("showRegister", "clicked")
+                    showRegisterCallback()
+                })
 
             }
-        ) {
-            Text("Login")
         }
-        CenteredClickableText(text = "Don't have an account? Sign up", onClick={
-            Log.i("showRegister", "clicked")
-            showRegisterCallback()
-        })
+    )
+}
 
-        }
 
-    }
+
 
 @Composable
 fun CenteredClickableText(text: String, onClick: () -> Unit) {

@@ -48,7 +48,8 @@ import com.example.unitmobile.R
 fun TextFieldWithToggle(
     label: String,
     value: String,
-    onValueChange: (String) -> Unit
+    onValueChange: (String) -> Unit,
+    placeholder: String,
 ) {
     var showText by remember { mutableStateOf(false) }
 
@@ -56,6 +57,7 @@ fun TextFieldWithToggle(
         value = value,
         onValueChange = onValueChange,
         label = { Text(label) },
+        placeholder = { Text(placeholder) },
         visualTransformation = if (showText) VisualTransformation.None else PasswordVisualTransformation(),
         trailingIcon = {
             IconButton(

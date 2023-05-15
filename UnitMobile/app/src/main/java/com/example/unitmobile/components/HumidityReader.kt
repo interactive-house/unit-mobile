@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -37,7 +38,7 @@ fun HumidityReader(
     lifecycleOwner: LifecycleOwner
 ) {
     val humidity = rememberSaveable { mutableStateOf("") }
-
+    var isFirstUpdate = rememberSaveable { mutableStateOf(true) }
     val humidityRef = db.getReference("SmartHomeValueSoil").child("StatusOfSoil")
     val loading = rememberSaveable { mutableStateOf(true) }
 
@@ -47,11 +48,14 @@ fun HumidityReader(
                 humidity.value = snapshot.value.toString()
                 Log.d("onDataChangeHumidity", "Humidity: ${humidity.value}")
                 Log.i("onDataChangeHumidity", "current state: ${lifecycleOwner.lifecycle.currentState}")
-                if (lifecycleOwner.lifecycle.currentState != (Lifecycle.State.STARTED ) &&
-                        lifecycleOwner.lifecycle.currentState != (Lifecycle.State.RESUMED)) {
+                if (!isFirstUpdate.value &&
+                    lifecycleOwner.lifecycle.currentState != (Lifecycle.State.STARTED ) &&
+                    lifecycleOwner.lifecycle.currentState != (Lifecycle.State.RESUMED)) {
+                    Log.i("onDataChangeHumidity", "${lifecycleOwner.lifecycle.currentState}}")
                     sendNotification(context, humidity.value)
                 }
                 loading.value = false
+                isFirstUpdate.value = false
             }
 
             override fun onCancelled(error: DatabaseError) {
