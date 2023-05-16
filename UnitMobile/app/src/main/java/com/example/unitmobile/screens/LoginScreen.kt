@@ -1,10 +1,9 @@
 package com.example.unitmobile.screens
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
@@ -14,13 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.example.unitmobile.components.CenteredClickableText
 import com.example.unitmobile.components.TextFieldWithToggle
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
@@ -43,7 +37,10 @@ fun LoginScreen(
         scaffoldState = scaffoldState,
         content = { padding ->
             Column(
-                modifier = modifier.fillMaxSize(),
+                modifier = modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .imePadding(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -98,32 +95,4 @@ fun LoginScreen(
             }
         }
     )
-}
-
-
-
-
-@Composable
-fun CenteredClickableText(text: String, onClick: () -> Unit) {
-    Box(
-    ) {
-        ClickableText(
-            modifier = Modifier
-                .padding(vertical = 24.dp)
-                .align(Alignment.TopCenter),
-
-
-            text = buildAnnotatedString {
-                withStyle(style = SpanStyle(color = Color.Blue, fontWeight = FontWeight.Bold)) {
-                    append(text)
-                }
-
-            },
-            onClick = {
-               onClick()
-            }
-
-
-        )
-    }
 }

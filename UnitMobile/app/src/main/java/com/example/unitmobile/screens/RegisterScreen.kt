@@ -1,20 +1,17 @@
 package com.example.unitmobile.screens
 
-import android.content.Context
-import android.widget.Toast
+
+import android.util.Log
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.example.unitmobile.components.CenteredClickableText
 import com.example.unitmobile.components.TextFieldWithToggle
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -24,7 +21,8 @@ import kotlinx.coroutines.launch
 fun RegisterScreen(
     onRegister: (Any?) -> Unit,
     modifier: Modifier = Modifier,
-    db: FirebaseDatabase
+    db: FirebaseDatabase,
+    showLoginCallback: () -> Unit
 ) {
     val auth = FirebaseAuth.getInstance()
 
@@ -45,7 +43,10 @@ fun RegisterScreen(
         scaffoldState = scaffoldState,
         content = { padding ->
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .imePadding(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -133,6 +134,10 @@ fun RegisterScreen(
                 ) {
                     Text("Sign Up")
                 }
+                CenteredClickableText(text = "Already have an account? Log in", onClick={
+                    Log.i("showLogin", "clicked")
+                    showLoginCallback()
+                })
             }
         }
     )

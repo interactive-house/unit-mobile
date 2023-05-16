@@ -51,7 +51,7 @@ fun HumidityReader(
                 if (!isFirstUpdate.value &&
                     lifecycleOwner.lifecycle.currentState != (Lifecycle.State.STARTED ) &&
                     lifecycleOwner.lifecycle.currentState != (Lifecycle.State.RESUMED)) {
-                    Log.i("onDataChangeHumidity", "${lifecycleOwner.lifecycle.currentState}}")
+                    Log.i("onDataChangeHumidity", "${lifecycleOwner.lifecycle.currentState}")
                     sendNotification(context, humidity.value)
                 }
                 loading.value = false

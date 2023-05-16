@@ -224,6 +224,19 @@ fun MyApp(
 
                             }
                         },
+                        showLoginCallback = {
+                            navController.navigate("login") {
+
+                                navController.graph.startDestinationRoute?.let { screen_route ->
+                                    popUpTo(screen_route) {
+                                        saveState = true
+                                    }
+                                }
+                                launchSingleTop = true
+                                restoreState = true
+
+                            }
+                        },
                         onLoginCallback = {
                             userState = it as FirebaseUser?
                             navController.navigate("home") {
@@ -303,6 +316,7 @@ fun NavigationGraph(
     itemStateFalse: List<String>,
     startDestination: String,
     showRegisterCallback: () -> Unit,
+    showLoginCallback: () -> Unit,
     onLoginCallback: (Any?) -> Unit,
     onRegisterCallback: (Any?) -> Unit
 ) {
@@ -325,14 +339,14 @@ fun NavigationGraph(
                     onRegisterCallback(it)
                 },
                 Modifier,
-                db
+                db,
+                showLoginCallback = { showLoginCallback() }
             )
         }
         composable("login") {
             LoginScreen(
                 onLogIn = {
                     onLoginCallback(it)
-
                 },
                 showRegisterCallback = { showRegisterCallback() },
                 modifier = Modifier

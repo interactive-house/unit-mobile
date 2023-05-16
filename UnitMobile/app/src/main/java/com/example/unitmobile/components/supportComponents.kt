@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material.Divider
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
@@ -37,14 +38,41 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.unitmobile.Song
 import com.example.unitmobile.R
 
+
+@Composable
+fun CenteredClickableText(text: String, onClick: () -> Unit) {
+    Box {
+        ClickableText(
+            modifier = Modifier
+                .padding(vertical = 24.dp)
+                .align(Alignment.TopCenter),
+
+
+            text = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = Color.Blue, fontWeight = FontWeight.Bold)) {
+                    append(text)
+                }
+
+            },
+            onClick = {
+                onClick()
+            }
+
+
+        )
+    }
+}
 @Composable
 fun TextFieldWithToggle(
     label: String,
