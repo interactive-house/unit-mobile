@@ -55,9 +55,7 @@ fun CenteredClickableText(text: String, onClick: () -> Unit) {
     Box {
         ClickableText(
             modifier = Modifier
-                .padding(vertical = 24.dp)
                 .align(Alignment.TopCenter),
-
 
             text = buildAnnotatedString {
                 withStyle(style = SpanStyle(color = Color.Blue, fontWeight = FontWeight.Bold)) {

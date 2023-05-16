@@ -10,7 +10,10 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.unitmobile.components.CenteredClickableText
 import com.example.unitmobile.components.TextFieldWithToggle
 import com.google.firebase.auth.FirebaseAuth
@@ -50,7 +53,10 @@ fun RegisterScreen(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text("Welcome to Smart House App")
+                Text("Fill in the fields below to register!",
+                    modifier.padding(bottom = 24.dp),
+                    style = TextStyle(fontSize = 18.sp)
+                )
                 TextField(
                     value = username,
                     onValueChange = { username = it },
