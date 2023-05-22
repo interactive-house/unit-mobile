@@ -92,6 +92,10 @@ fun Information() {
         exit = slideOutVertically() + shrinkVertically() + fadeOut()
 
     ) {
-        Text(text = "Welcome to the smart house app, here you can control your house devices and see the current status of your house. Try it out by clicking on the switches below.")
+        Column {
+            Text(text = "Welcome to the smart house app, here you can control your house devices and see the current status of your house. Try it out by clicking on the switches below or by going to the media player tab.")
+            Text(text = "You can also control your house devices with voice commands by clicking the microphone button")
+            Text(text = "To get more help on how to use the app, click on the user button in the top right corner and then help in the dropdown.")
+        }
     }
 }
