@@ -73,8 +73,6 @@ fun MediaControls(db: FirebaseDatabase) {
     ) { mutableStateOf(Song("", "", "", 0)) }
     val currentIndex = remember { mutableStateOf(0) }
 
-
-    val statusRef = db.getReference("simulatedDevices").child("action")
     val simulatedDevicesRef = db.getReference("simulatedDevices")
     viewModel.initSongs()
 
@@ -88,14 +86,14 @@ fun MediaControls(db: FirebaseDatabase) {
 
     }
     viewModel.currentTrack.observe(LocalContext.current as androidx.activity.ComponentActivity) { track ->
-        Log.d("MediaControls current track123", "Current track: $track")
+        Log.d("MediaControls current track", "Current track: $track")
         if (track.trackID == "") {
             currentTrack.value = Song("", "", "", 0)
             currentIndex.value = -1
         } else {
             songList.find { it.trackID == track.trackID }?.let { currentTrack.value = it }
             Log.i(
-                "MediaControls current track123",
+                "MediaControls current track",
                 "Current index: ${songList.indexOf(songList.find { it.trackID == currentTrack.value.trackID })}"
             )
             currentIndex.value =
