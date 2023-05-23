@@ -48,6 +48,7 @@ fun HumidityReader(
                 humidity.value = snapshot.value.toString()
                 Log.d("onDataChangeHumidity", "Humidity: ${humidity.value}")
                 Log.i("onDataChangeHumidity", "current state: ${lifecycleOwner.lifecycle.currentState}")
+                Log.i("onDataChangeHumidity", "isFirstUpdate: ${isFirstUpdate.value}")
                 if (!isFirstUpdate.value &&
                     lifecycleOwner.lifecycle.currentState != (Lifecycle.State.STARTED ) &&
                     lifecycleOwner.lifecycle.currentState != (Lifecycle.State.RESUMED)) {

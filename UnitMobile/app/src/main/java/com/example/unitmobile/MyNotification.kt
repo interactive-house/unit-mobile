@@ -16,10 +16,8 @@ class MyNotification(var context: Context, var title: String, var msg: String) {
     lateinit var notificationChannel: NotificationChannel
     lateinit var notificationBuilder: NotificationCompat.Builder
     fun fireNotification(){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-            notificationChannel = NotificationChannel(channelID, channelName, NotificationManager.IMPORTANCE_HIGH)
-            notificationManager.createNotificationChannel(notificationChannel)
-        }
+        notificationChannel = NotificationChannel(channelID, channelName, NotificationManager.IMPORTANCE_HIGH)
+        notificationManager.createNotificationChannel(notificationChannel)
         val intent = Intent(context, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
         val pendingIntent = PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)

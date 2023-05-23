@@ -284,7 +284,7 @@ fun MediaControls(db: FirebaseDatabase) {
                                     true -> {
                                         Box(
                                             contentAlignment = Alignment.Center,
-                                            modifier = Modifier.fillMaxSize()
+                                            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
                                         ) {
 
 
