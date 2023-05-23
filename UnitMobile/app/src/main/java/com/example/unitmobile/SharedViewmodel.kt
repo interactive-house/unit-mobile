@@ -99,7 +99,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 Log.i("SharedViewModel", "Statusweqqqqqqqqqqqqqq: $status")
 
                 currentTrack.postValue(song)
-                currentStatus.value = status
+                currentStatus.value = status.lowercase()
 
             }
 

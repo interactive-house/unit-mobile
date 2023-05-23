@@ -164,12 +164,12 @@ fun BottomTrackController(
                 }
                 IconButton(
                     onClick = {
-                        val newStatus = if (status == "Playing") "pause" else "play"
+                        val newStatus = if (status == "playing") "pause" else "play"
                         handleAction(newStatus)
                     },
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
-                    if (status == "Playing") {
+                    if (status == "playing") {
                         Icon(Icons.Default.Pause, contentDescription = "Pause")
                     } else {
                         Icon(Icons.Default.PlayArrow, contentDescription = "Play")
@@ -204,12 +204,12 @@ fun BottomTrackController(
 
                     IconButton(
                                     onClick = {
-                                        val newStatus = if (status == "Playing") "pause" else "play"
+                                        val newStatus = if (status == "playing") "pause" else "play"
                                         handleAction(newStatus)
                                     },
                                     modifier = Modifier.padding(horizontal = 8.dp)
                                 ) {
-                                    if (status == "Playing") {
+                                    if (status == "playing") {
                                         Icon(Icons.Default.Pause, contentDescription = "Pause")
                                     } else {
                                         Icon(Icons.Default.PlayArrow, contentDescription = "Play")

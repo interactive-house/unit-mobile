@@ -214,7 +214,7 @@ fun MediaControls(db: FirebaseDatabase) {
 
 
                     deviceStatus.value =
-                        snapshot.child("deviceStatus").getValue(String::class.java)!!
+                        snapshot.child("deviceStatus").getValue(String::class.java)!!.lowercase()
 
                     Log.d("onDataChangeMedia", "Status: ${status.value}")
                     Log.d("onDataChangeMedia", "Device status: ${deviceStatus.value}")
@@ -358,7 +358,7 @@ fun MediaControls(db: FirebaseDatabase) {
 //                    modifier = Modifier.size(100.dp)
 //                )
                                                             SpinningImage(
-                                                                status.value == "Playing",
+                                                                status.value == "playing",
                                                                 currentTrack.value,
                                                                 size = 150.dp
                                                             )
@@ -385,12 +385,12 @@ fun MediaControls(db: FirebaseDatabase) {
                                                                 IconButton(
                                                                     onClick = {
                                                                         val newStatus =
-                                                                            if (status.value == "Playing") "pause" else "play"
+                                                                            if (status.value == "playing") "pause" else "play"
                                                                         handleAction(newStatus)
                                                                     },
                                                                     modifier = Modifier.padding(horizontal = 8.dp)
                                                                 ) {
-                                                                    if (status.value == "Playing") {
+                                                                    if (status.value == "playing") {
                                                                         Icon(
                                                                             Icons.Default.Pause,
                                                                             contentDescription = "Pause"
@@ -549,7 +549,7 @@ fun MediaControls(db: FirebaseDatabase) {
                                                                             ) {
                                                                             if (currentTrack.value.song == songList[index].song && deviceStatus.value == "online") {
 
-                                                                                MusicAnimation(status.value == "Playing")
+                                                                                MusicAnimation(status.value == "playing")
 
                                                                             }
                                                                         }
